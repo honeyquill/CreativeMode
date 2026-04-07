@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Il2Cpp;
 using UnityEngine;
+using UnityEngine.Playables;
 using static CreativeMode.Helpers.BeetleUtils;
 
 namespace CreativeMode;
@@ -12,13 +13,15 @@ public class BrushManager
     public void BrushOnUpdate()
     {
         if (!toggle) return;
+        var beetleStatsModifyer = UnityEngine.Object.FindObjectsOfType<Il2Cpp.ModifiersController>();
+        
         if (GetLocalBeetle().ClassData.BeetleType != BeetleType.Cyborg) 
         { 
             SendChatMessage("Brush can only be used on cyborg, deactivating.");
             toggle = false;
         }
 
-        if (GetLocalBeetle()._abilityChargingNormal.ChargeLerp == 0)
+        if (GetLocalBeetle()._abilityChargingNormal.ChargeLerp == 0 && !GetLocalBeetle().ModifiersController.ActiveModifiers.ContainsKey(ModifierType.ElectricAura))
         {
             SendChatMessage("Test " + GetLaserPos().ToString());
             GetLocalBeetle()._abilityChargingNormal.SetChargeLerp(1);
