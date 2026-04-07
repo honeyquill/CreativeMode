@@ -1,0 +1,13 @@
+﻿# Ignore everything
+*
+
+# Allow folders so Git can traverse them
+!*/
+
+# Allow C# files
+!*.cs
+
+!*.csproj
+!.gitignore
+/Quill/obj/Debug/.NETFramework,Version=v4.7.2.AssemblyAttributes.cs
+
