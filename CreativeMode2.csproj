@@ -82,13 +82,13 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="BrushManager.cs" />
         <Compile Include="Commands\Brush.cs" />
         <Compile Include="Commands\NullableAttributes.cs" />
         <Compile Include="Commands\Ping.cs" />
         <Compile Include="Helpers\BeetleUtils.cs" />
+        <Compile Include="Main.cs" />
         <Compile Include="Properties\AssemblyInfo.cs"/>
-        <Compile Include="Properties\BrushManager.cs" />
-        <Compile Include="Properties\Main.cs" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
