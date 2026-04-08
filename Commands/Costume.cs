@@ -48,9 +48,9 @@ public class Costume : ChatCommand
             case "off":
                 for (int i = 0; i < GetActorByID(arg1).transform.childCount; i++)
                 {
-                    if (GetActorByID(arg1).transform.GetChild(i).name == "Bunny(clone)")
+                    if (GetActorByID(arg1).transform.GetChild(i).name == "Bunny(Clone)")
                     {
-                        UnityEngine.Object.Destroy(GetActorByID(arg1).transform.GetChild(i));
+                        UnityEngine.Object.Destroy(GetActorByID(arg1).transform.GetChild(i).gameObject);
                     }
                 }
                 
