@@ -87,11 +87,9 @@ public static class BeetleUtils
 
         public static BeetleActor GetLocalBeetle()
         {
-            BeetleActor[] allBeetles = GetAllBeetles();
-            if (allBeetles.Length == 0) { return null; }
-            foreach (var beetle in allBeetles)
+            if (NetworkActor.LocalActor is BeetleActor beetle)
             {
-                if (beetle.IsLocalPlayer) return beetle;
+                return beetle;
             }
             return null;
         }

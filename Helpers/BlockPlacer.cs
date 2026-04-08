@@ -23,7 +23,7 @@ namespace CreativeMode.Helpers
             byte[] fileData = File.ReadAllBytes(Modpath); 
             Texture2D texture = new Texture2D(2, 2); // size gets replaced
             texture.LoadImage(fileData); // loads PNG/JPG 
-            Material mat = new Material(Shader.Find("Shader Graphs/EgyptTilesShader"));
+            Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
             texture.filterMode = FilterMode.Point; // no blur
             texture.wrapMode = TextureWrapMode.Clamp;
 
