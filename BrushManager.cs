@@ -16,6 +16,7 @@ public class BrushManager
     {
         if (!toggle) return;
         var beetleStatsModifyer = UnityEngine.Object.FindObjectsOfType<Il2Cpp.ModifiersController>();
+        GetLocalBeetle().ModifiersController.AddModifierLocal(ModifierType.ElectricAura, 10000, 0);
         
         if (GetLocalBeetle().ClassData.BeetleType != BeetleType.Cyborg) 
         { 
@@ -23,14 +24,13 @@ public class BrushManager
             toggle = false;
         }
 
-        if (GetLocalBeetle()._abilityChargingNormal.ChargeLerp == 0 && !GetLocalBeetle().ModifiersController.ActiveModifiers.ContainsKey(ModifierType.ElectricAura))
+        if (GetLocalBeetle()._abilityChargingNormal.ChargeLerp == 0)
         {
-            SendChatMessage("Test " + GetLaserPos().ToString());
-
             Vector3 placePos = Vector3.MoveTowards(GetLaserPos(), GetLocalBeetle().transform.position, 2.5f);
 
             PlaceBlock(blockPath+".png", 5, placePos);
             GetLocalBeetle()._abilityChargingNormal.SetChargeLerp(1);
+            
         }
         
     }
@@ -52,6 +52,7 @@ public class BrushManager
     public void BrushDeactivate()
     {
         SendChatMessage("Brush deactivated.");
+        GetLocalBeetle().ModifiersController.RemoveModifierLocal(ModifierType.ElectricAura);
         toggle = false;
         
     }

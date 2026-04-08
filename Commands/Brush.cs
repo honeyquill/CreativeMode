@@ -16,9 +16,10 @@ public class Brush : ChatCommand
         var brushManager = Main.Instance?.BrushManager;
 
         brushManager?.BrushActivate();
+        
         brushManager.blockPath = args.Length > 0 ? args[0] : "Missing";
-
-        if (brushManager != null && args[0] == "deactivate")
+        
+        if (brushManager != null && args.Length > 0 && args[0] == "deactivate")
         {
             brushManager.BrushDeactivate();
         }
