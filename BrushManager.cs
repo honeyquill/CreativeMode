@@ -127,6 +127,7 @@ public class BrushManager
 
         string json = JsonConvert.SerializeObject(data, Formatting.Indented);
         File.WriteAllText(Path.Combine(MelonEnvironment.ModsDirectory, "Map.json"), json);
+    }
     private void ToggleDeleteMode()
     {
         deleteMode = !deleteMode;
