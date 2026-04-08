@@ -3,13 +3,15 @@ using Il2Cpp;
 using UnityEngine;
 using UnityEngine.Playables;
 using static CreativeMode.Helpers.BeetleUtils;
+using static CreativeMode.Helpers.BlockPlacer;
+using static UnityEngine.GraphicsBuffer;
 
 namespace CreativeMode;
 
 public class BrushManager
 {
     public bool toggle = false;
-    
+    public string blockPath = "stone-bricks";
     public void BrushOnUpdate()
     {
         if (!toggle) return;
@@ -24,11 +26,18 @@ public class BrushManager
         if (GetLocalBeetle()._abilityChargingNormal.ChargeLerp == 0 && !GetLocalBeetle().ModifiersController.ActiveModifiers.ContainsKey(ModifierType.ElectricAura))
         {
             SendChatMessage("Test " + GetLaserPos().ToString());
+
+            Vector3 placePos = Vector3.MoveTowards(GetLaserPos(), GetLocalBeetle().transform.position, 2.5f);
+
+            PlaceBlock(blockPath+".png", 5, placePos);
             GetLocalBeetle()._abilityChargingNormal.SetChargeLerp(1);
         }
         
     }
     
+
+
+
     public void BrushActivate()
     {
         if (GetLocalBeetle().ClassData.BeetleType != BeetleType.Cyborg)
