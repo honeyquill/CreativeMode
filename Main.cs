@@ -3,7 +3,6 @@ using System.Linq;
 using CreativeMode.Commands;
 using MelonLoader;
 using Main = CreativeMode.Main;
-
 [assembly: MelonAdditionalDependencies("ChatCommands")]
 [assembly: MelonInfo(typeof(Main), "CreativeMode", "1.0", "Bee & Spike")]
 
@@ -30,6 +29,10 @@ public class Main : MelonMod
         chatCommands.RegisterCommand("brush", new Brush());
         chatCommands.RegisterCommand("Costume", new Costume());
         chatCommands.RegisterCommand("grav", new DisableGravity());
+        chatCommands.RegisterCommand("save", new Save());
+        chatCommands.RegisterCommand("load", new Load());
+
+
     }
 
     public override void OnUpdate()

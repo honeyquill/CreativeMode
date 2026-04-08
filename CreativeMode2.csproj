@@ -57,6 +57,9 @@
     <Reference Include="MelonLoader">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beetleball Demo\MelonLoader\net6\MelonLoader.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beetleball Demo\MelonLoader\Dependencies\Il2CppAssemblyGenerator\Cpp2IL\cpp2il_out\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -92,7 +95,9 @@
     <Compile Include="Commands\Brush.cs" />
     <Compile Include="Commands\Costume.cs" />
     <Compile Include="Commands\DisableGravity.cs" />
+    <Compile Include="Commands\Load.cs" />
     <Compile Include="Commands\Ping.cs" />
+    <Compile Include="Commands\Save.cs" />
     <Compile Include="Helpers\BeetleUtils.cs" />
     <Compile Include="Helpers\BlockPlacer.cs" />
     <Compile Include="Main.cs" />
