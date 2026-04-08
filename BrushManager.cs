@@ -11,38 +11,58 @@ namespace CreativeMode;
 public class BrushManager
 {
     public bool toggle = false;
+    public bool deleteMode = false;
     public string blockPath = "stone-bricks";
     public void BrushOnUpdate()
     {
         if (!toggle) return;
         var beetleStatsModifyer = UnityEngine.Object.FindObjectsOfType<Il2Cpp.ModifiersController>();
         GetLocalBeetle().ModifiersController.AddModifierLocal(ModifierType.ElectricAura, 10000, 0);
-        
-        if (GetLocalBeetle().ClassData.BeetleType != BeetleType.Cyborg) 
-        { 
+
+        if (GetLocalBeetle().ClassData.BeetleType != BeetleType.Cyborg) //doesnt work lol
+        {
             SendChatMessage("Brush can only be used on cyborg, deactivating.");
             toggle = false;
+        } 
+
+        if (Pressed(UnityEngine.InputSystem.Key.F3))
+        {
+            ToggleDeleteMode();
         }
 
-        if (GetLocalBeetle()._abilityChargingNormal.ChargeLerp == 0)
+        if (GetLocalBeetle()._abilityChargingNormal.ChargeLerp != 0) return;
+
+        if (!deleteMode)
         {
             Vector3 placePos = Vector3.MoveTowards(GetLaserPos(), GetLocalBeetle().transform.position, 2.5f);
 
-            PlaceBlock(blockPath+".png", 5, placePos);
+            PlaceBlock(blockPath + ".png", 5, placePos);
             Teleport(GetLocalBeetle().OwnerClientId);
             GetLocalBeetle()._abilityChargingNormal.SetChargeLerp(1);
         }
-        
+        else
+        {
+            Vector3 destroyPos = GetLaserPos();
+
+            RemoveBlock(destroyPos);
+            Teleport(GetLocalBeetle().OwnerClientId);
+            GetLocalBeetle()._abilityChargingNormal.SetChargeLerp(1);
+        }
     }
     
 
-
+    private void ToggleDeleteMode()
+    {
+        deleteMode = !deleteMode;
+        SendChatMessage("Delete mode: " + (deleteMode ? "ON" : "OFF"));
+    }
 
     public void BrushActivate()
     {
         if (GetLocalBeetle().ClassData.BeetleType != BeetleType.Cyborg)
         {
-            SendChatMessage("Brush can only be used on cyborg");
+            var networkPrefabSpawner = UnityEngine.Object.FindObjectOfType<Il2Cpp.NetworkPrefabSpawner>();
+            networkPrefabSpawner.SpawnClassAndSetTeam(GetLocalBeetle().OwnerClientId, TeamType.Blue, (int)BeetleType.Cyborg);
             return;
         }
         SendChatMessage("Brush activated.");
