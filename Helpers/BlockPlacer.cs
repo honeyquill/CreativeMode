@@ -15,20 +15,20 @@ namespace CreativeMode.Helpers
         public static Material LoadTexture(string path)
         {
             string Modpath = Path.Combine(MelonEnvironment.ModsDirectory, "Blocks", path);
-            if (!File.Exists(Modpath)) 
-            { 
+            if (!File.Exists(Modpath))
+            {
                 BeetleUtils.SendChatMessage($"File not found: {Modpath}");
                 return null;
             }
-            byte[] fileData = File.ReadAllBytes(Modpath); 
+            byte[] fileData = File.ReadAllBytes(Modpath);
             Texture2D texture = new Texture2D(2, 2); // size gets replaced
             texture.LoadImage(fileData); // loads PNG/JPG 
             Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
             texture.filterMode = FilterMode.Point; // no blur
             texture.wrapMode = TextureWrapMode.Clamp;
 
-            mat.mainTexture = texture; 
-            return mat; 
+            mat.mainTexture = texture;
+            return mat;
         }
 
         public static Vector3 Grid(Vector3 original, float gridSize)
@@ -62,6 +62,11 @@ namespace CreativeMode.Helpers
                 Mathf.Abs(gridP2.y - gridP1.y),
                 Mathf.Abs(gridP2.z - gridP1.z)
             );
+        }
+
+        public static void RemoveBlock(Vector3 pos)
+        {
+            BeetleUtils.SendChatMessage("Removing block at: " + pos + " (Havent added functionality yet.)");
         }
     }
 }
