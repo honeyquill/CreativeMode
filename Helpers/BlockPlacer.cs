@@ -45,11 +45,10 @@ namespace CreativeMode.Helpers
             Material mat = LoadTexture(path);
 
             // Snap the position to the nearest grid point
-            Vector3 p1 = Grid(pos, size);
-            Vector3 p2 = Grid(pos, size);
+            Vector3 GridCenter = Grid(pos, size);
 
-            Vector3 gridP1 = p1 + new Vector3(size / 2, size / 2, size / 2);
-            Vector3 gridP2 = p2 - new Vector3(size / 2, size / 2, size / 2);
+            Vector3 gridP1 = GridCenter + new Vector3(size / 2, size / 2, size / 2);
+            Vector3 gridP2 = GridCenter - new Vector3(size / 2, size / 2, size / 2);
 
             GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cube.GetComponent<Renderer>().material = mat;
