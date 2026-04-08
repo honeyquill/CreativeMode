@@ -28,6 +28,7 @@ public class Main : MelonMod
         
         chatCommands.RegisterCommand("Ping", new Ping());
         chatCommands.RegisterCommand("brush", new Brush());
+        chatCommands.RegisterCommand("Costume", new Costume());
     }
 
     public override void OnUpdate()

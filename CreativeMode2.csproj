@@ -39,6 +39,9 @@
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Beetleball Demo\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="ChatCommands">
+      <HintPath>..\..\ChatCommands.dll</HintPath>
+    </Reference>
     <Reference Include="ChatCommands %281%29">
       <HintPath>..\..\..\ChatCommands (1).dll</HintPath>
     </Reference>
@@ -84,11 +87,12 @@
   <ItemGroup>
     <Compile Include="BrushManager.cs" />
     <Compile Include="Commands\Brush.cs" />
-    <Compile Include="Commands\NullableAttributes.cs" />
+    <Compile Include="Commands\Costume.cs" />
     <Compile Include="Commands\Ping.cs" />
     <Compile Include="Helpers\BeetleUtils.cs" />
     <Compile Include="Helpers\BlockPlacer.cs" />
     <Compile Include="Main.cs" />
+    <Compile Include="NullableAttributes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
