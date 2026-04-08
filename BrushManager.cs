@@ -29,8 +29,8 @@ public class BrushManager
             Vector3 placePos = Vector3.MoveTowards(GetLaserPos(), GetLocalBeetle().transform.position, 2.5f);
 
             PlaceBlock(blockPath+".png", 5, placePos);
+            Teleport(GetLocalBeetle().OwnerClientId);
             GetLocalBeetle()._abilityChargingNormal.SetChargeLerp(1);
-            
         }
         
     }
