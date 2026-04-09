@@ -1,9 +1,9 @@
 ﻿#nullable enable
-using System.IO;
-using System.Linq;
 using CreativeMode.Commands;
 using MelonLoader;
 using MelonLoader.Utils;
+using System.IO;
+using System.Linq;
 using Main = CreativeMode.Main;
 [assembly: MelonAdditionalDependencies("ChatCommands")]
 [assembly: MelonInfo(typeof(Main), "CreativeMode", "1.0", "Bee & Spike")]
@@ -14,6 +14,7 @@ public class Main : MelonMod
 {
     public static Main? Instance { get; private set; }
     public BrushManager? BrushManager;
+    float deltaTime = 0.0f;
 
     public string warpsPath = Path.Combine(MelonEnvironment.ModsDirectory, "Warps");
 
@@ -42,6 +43,7 @@ public class Main : MelonMod
 
     public override void OnUpdate()
     {
+
         BrushManager?.BrushOnUpdate();
     }
 

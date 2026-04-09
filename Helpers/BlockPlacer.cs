@@ -18,7 +18,6 @@ namespace CreativeMode.Helpers
         private static readonly Stack<GameObject> s_pool = new();
         private static readonly List<GameObject> s_active = new();
         private static Mesh s_sharedCubeMesh;
-        private static Material s_fallbackMaterial;
 
         public static Material LoadTexture(string path)
         {
@@ -28,12 +27,14 @@ namespace CreativeMode.Helpers
                 return null;
             }
             byte[] fileData = File.ReadAllBytes(Modpath);
-            Texture2D texture = new Texture2D(2, 2); // size gets replaced
-            texture.LoadImage(fileData); // loads PNG/JPG 
-            texture.filterMode = FilterMode.Point; // no blur
+            Texture2D texture = new Texture2D(2, 2); 
+            texture.LoadImage(fileData); 
+            texture.filterMode = FilterMode.Point; 
             texture.wrapMode = TextureWrapMode.Clamp;
 
-            Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            Material mat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+            mat.SetColor("_BaseColor", new Color(0.8f, 0.8f, 0.8f, 1f));
+            mat.enableInstancing = true;
             mat.mainTexture = texture;
             return mat;
         }
@@ -41,9 +42,6 @@ namespace CreativeMode.Helpers
         // Returns a material for the exact path or null if not found.
         private static Material GetMaterialIfExists(string path)
         {
-            if (string.IsNullOrEmpty(path))
-                return null;
-
             if (s_materialCache.TryGetValue(path, out var mat))
                 return mat;
 
@@ -57,25 +55,13 @@ namespace CreativeMode.Helpers
         // Returns a material, falling back to a magenta fallback when path is missing or invalid.
         private static Material GetOrCreateMaterial(string path)
         {
-            if (string.IsNullOrEmpty(path))
-                return GetFallbackMaterial();
 
             if (s_materialCache.TryGetValue(path, out var mat))
                 return mat;
 
-            var loaded = LoadTexture(path) ?? GetFallbackMaterial();
+            var loaded = LoadTexture(path);
             s_materialCache[path] = loaded;
             return loaded;
-        }
-
-        private static Material GetFallbackMaterial()
-        {
-            if (s_fallbackMaterial != null)
-                return s_fallbackMaterial;
-
-            s_fallbackMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            s_fallbackMaterial.color = Color.magenta;
-            return s_fallbackMaterial;
         }
 
         public static Vector3 Grid(Vector3 original, float gridSize)
@@ -93,91 +79,70 @@ namespace CreativeMode.Helpers
             if (s_sharedCubeMesh != null) return s_sharedCubeMesh;
 
             Mesh mesh = new Mesh();
-            mesh.name = "Shared_Subdivided_Cube";
+            mesh.name = "Shared_3_Side_Cube";
 
             Vector3[] vertices = {
-                // Front
-                new Vector3(-0.5f,-0.5f, 0.5f),
-                new Vector3(0.5f,-0.5f, 0.5f),
-                new Vector3(0.5f,0.5f,0.5f),
-                new Vector3(-0.5f,0.5f,0.5f),
-                // Back
-                new Vector3(0.5f,-0.5f,-0.5f),
-                new Vector3(-0.5f,-0.5f,-0.5f),
-                new Vector3(-0.5f,0.5f,-0.5f),
-                new Vector3(0.5f,0.5f,-0.5f),
-                // Left
-                new Vector3(-0.5f,-0.5f,-0.5f),
-                new Vector3(-0.5f,-0.5f,0.5f),
-                new Vector3(-0.5f,0.5f,0.5f),
-                new Vector3(-0.5f,0.5f,-0.5f),
-                // Right
-                new Vector3(0.5f,-0.5f,0.5f),
-                new Vector3(0.5f,-0.5f,-0.5f),
-                new Vector3(0.5f,0.5f,-0.5f),
-                new Vector3(0.5f,0.5f,0.5f),
-                // Top
-                new Vector3(-0.5f,0.5f,0.5f),
-                new Vector3(0.5f,0.5f,0.5f),
-                new Vector3(0.5f,0.5f,-0.5f),
-                new Vector3(-0.5f,0.5f,-0.5f),
-                // Bottom
-                new Vector3(-0.5f,-0.5f,-0.5f),
-                new Vector3(0.5f,-0.5f,-0.5f),
-                new Vector3(0.5f,-0.5f,0.5f),
-                new Vector3(-0.5f,-0.5f,0.5f),
-            };
+        // Front
+        new Vector3(-0.5f,-0.5f,0.5f),
+        new Vector3(0.5f,-0.5f,0.5f),
+        new Vector3(0.5f,0.5f,0.5f),
+        new Vector3(-0.5f,0.5f,0.5f),
+        // Back
+        new Vector3(0.5f,-0.5f,-0.5f),
+        new Vector3(-0.5f,-0.5f,-0.5f),
+        new Vector3(-0.5f,0.5f,-0.5f),
+        new Vector3(0.5f,0.5f,-0.5f),
+        // Left
+        new Vector3(-0.5f,-0.5f,-0.5f),
+        new Vector3(-0.5f,-0.5f,0.5f),
+        new Vector3(-0.5f,0.5f,0.5f),
+        new Vector3(-0.5f,0.5f,-0.5f),
+        // Right
+        new Vector3(0.5f,-0.5f,0.5f),
+        new Vector3(0.5f,-0.5f,-0.5f),
+        new Vector3(0.5f,0.5f,-0.5f),
+        new Vector3(0.5f,0.5f,0.5f),
+        // Top
+        new Vector3(-0.5f,0.5f,0.5f),
+        new Vector3(0.5f,0.5f,0.5f),
+        new Vector3(0.5f,0.5f,-0.5f),
+        new Vector3(-0.5f,0.5f,-0.5f),
+        // Bottom
+        new Vector3(-0.5f,-0.5f,-0.5f),
+        new Vector3(0.5f,-0.5f,-0.5f),
+        new Vector3(0.5f,-0.5f,0.5f),
+        new Vector3(-0.5f,-0.5f,0.5f)
+    };
 
             mesh.vertices = vertices;
-            mesh.subMeshCount = 6;
 
-            int[][] triangles = new int[6][];
-            triangles[0] = new int[] { 0, 1, 2, 0, 2, 3 };      // Front
-            triangles[1] = new int[] { 4, 5, 6, 4, 6, 7 };      // Back
-            triangles[2] = new int[] { 8, 9, 10, 8, 10, 11 };   // Left
-            triangles[3] = new int[] { 12, 13, 14, 12, 14, 15 }; // Right
-            triangles[4] = new int[] { 16, 17, 18, 16, 18, 19 }; // Top
-            triangles[5] = new int[] { 20, 21, 22, 20, 22, 23 }; // Bottom
+            // 3 submeshes: sides, top, bottom
+            mesh.subMeshCount = 3;
 
+            int[] sideTriangles = {
+        0,1,2, 0,2,3,      // Front
+        4,5,6, 4,6,7,      // Back
+        8,9,10, 8,10,11,   // Left
+        12,13,14, 12,14,15 // Right
+    };
+            int[] topTriangles = { 16, 17, 18, 16, 18, 19 };
+            int[] bottomTriangles = { 20, 21, 22, 20, 22, 23 };
+
+            mesh.SetTriangles(sideTriangles, 0);
+            mesh.SetTriangles(topTriangles, 1);
+            mesh.SetTriangles(bottomTriangles, 2);
+
+            // UVs
+            Vector2[] uvs = new Vector2[24];
             for (int i = 0; i < 6; i++)
-                mesh.SetTriangles(triangles[i], i);
-
-            // UVs: 4 UVs per face, map each face to full [0,1] quad
-            Vector2[] uvs = new Vector2[24]
             {
-                // Front
-                new Vector2(0f, 0f),
-                new Vector2(1f, 0f),
-                new Vector2(1f, 1f),
-                new Vector2(0f, 1f),
-                // Back
-                new Vector2(0f, 0f),
-                new Vector2(1f, 0f),
-                new Vector2(1f, 1f),
-                new Vector2(0f, 1f),
-                // Left
-                new Vector2(0f, 0f),
-                new Vector2(1f, 0f),
-                new Vector2(1f, 1f),
-                new Vector2(0f, 1f),
-                // Right
-                new Vector2(0f, 0f),
-                new Vector2(1f, 0f),
-                new Vector2(1f, 1f),
-                new Vector2(0f, 1f),
-                // Top
-                new Vector2(0f, 0f),
-                new Vector2(1f, 0f),
-                new Vector2(1f, 1f),
-                new Vector2(0f, 1f),
-                // Bottom
-                new Vector2(0f, 0f),
-                new Vector2(1f, 0f),
-                new Vector2(1f, 1f),
-                new Vector2(0f, 1f)
-            };
-
+                uvs[i * 4 + 0] = new Vector2(0f, 0f);
+                uvs[i * 4 + 1] = new Vector2(1f, 0f);
+                uvs[i * 4 + 2] = new Vector2(1f, 1f);
+                uvs[i * 4 + 3] = new Vector2(0f, 1f);
+            }
             mesh.uv = uvs;
+
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
 
@@ -206,6 +171,7 @@ namespace CreativeMode.Helpers
             var obj = new GameObject("Block");
             obj.AddComponent<MeshFilter>();
             obj.AddComponent<MeshRenderer>();
+            obj.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off; //disable shadows by default for performance
             var collider = obj.AddComponent<BoxCollider>();
             collider.center = Vector3.zero;
             collider.size = Vector3.one;
@@ -223,11 +189,11 @@ namespace CreativeMode.Helpers
         public static void PlaceBlock(string path, float size, Vector3 pos, bool? grid = true)
         {
             // Acquire materials (cached). Side material must exist or fallback.
-            Material sideMat = GetOrCreateMaterial(path) ?? GetFallbackMaterial();
+            Material sideMat = GetOrCreateMaterial(path);
 
             // Top/bottom: prefer explicit textures, but fall back to side material if they don't exist.
             Material topMat = GetMaterialIfExists(path?.Replace(".png", "_top.png")) ?? sideMat;
-            Material bottomMat = GetMaterialIfExists(path?.Replace(".png", "_bottom.png")) ?? sideMat;
+            Material bottomMat = GetMaterialIfExists(path?.Replace(".png", "_bottom.png")) ?? topMat ?? sideMat;
 
             // Snap the position to the nearest grid point
             Vector3 gridCenter = Grid(pos, size);
@@ -245,12 +211,9 @@ namespace CreativeMode.Helpers
             // Use sharedMaterials to avoid instantiating new material copies for renderer
             mr.sharedMaterials = new Material[]
             {
-                sideMat,
-                sideMat,
-                sideMat,
-                sideMat,
-                topMat,
-                bottomMat
+        sideMat,  // sides
+        topMat,   // top
+        bottomMat // bottom
             };
 
             // Reduce renderer overhead

@@ -22,11 +22,20 @@ public class BrushManager
     public static string[] BlockPaths = new string[0];
 
     public bool toggle = false;
-    public bool deleteMode = false;
     public string blockPath = "stone-bricks";
+    float deltaTime = 0.0f;
 
     public void BrushOnUpdate()
     {
+
+        // Smooth delta time
+        deltaTime += (Time.deltaTime - deltaTime) * 0.1f;
+
+        float fps = 1.0f / deltaTime;
+        float ms = deltaTime * 1000.0f;
+
+        MelonLogger.Msg($"FPS: {fps:F1} | Frame Time: {ms:F2} ms");
+
         if (!toggle) return;
         var local = GetLocalBeetle();
         local.ModifiersController.AddModifierLocal(ModifierType.ElectricAura, 10000, 0);
@@ -37,52 +46,37 @@ public class BrushManager
             toggle = false;
         } 
 
-        if (Pressed(UnityEngine.InputSystem.Key.F3))
-        {
-            ToggleDeleteMode();
-        }
-
         if (local._abilityChargingNormal.ChargeLerp != 0) return;
 
-        if (!deleteMode)
+        Vector3 placePos = Vector3.MoveTowards(GetLaserPos(), local.transform.position, 2.5f);
+
+        PlaceBlock(blockPath + ".png", 5, placePos);
+
+        // Add new entry to the arrays
+        float[][] newPositions = new float[BlockPositions.Length + 1][];
+        string[] newPaths = new string[BlockPaths.Length + 1];
+
+        for (int i = 0; i < BlockPositions.Length; i++)
         {
-            Vector3 placePos = Vector3.MoveTowards(GetLaserPos(), local.transform.position, 2.5f);
-
-            PlaceBlock(blockPath + ".png", 5, placePos);
-
-            // Add new entry to the arrays
-            float[][] newPositions = new float[BlockPositions.Length + 1][];
-            string[] newPaths = new string[BlockPaths.Length + 1];
-
-            for (int i = 0; i < BlockPositions.Length; i++)
-            {
-                newPositions[i] = BlockPositions[i];
-                newPaths[i] = BlockPaths[i];
-            }
-
-            // Store position and path
-            newPositions[BlockPositions.Length] = new float[]
-            {
-                Grid(placePos, 5).x / 5,
-                Grid(placePos, 5).y / 5,
-                Grid(placePos, 5).z / 5
-            };
-            newPaths[BlockPaths.Length] = blockPath + ".png";
-
-            BlockPositions = newPositions;
-            BlockPaths = newPaths;
-
-            Teleport(local.OwnerClientId, local.transform.position, local.transform.rotation);
-            local._abilityChargingNormal.SetChargeLerp(1);
+            newPositions[i] = BlockPositions[i];
+            newPaths[i] = BlockPaths[i];
         }
-        else
+
+        // Store position and path
+        newPositions[BlockPositions.Length] = new float[]
         {
-            Vector3 destroyPos = GetLaserPos();
+            Grid(placePos, 5).x / 5,
+            Grid(placePos, 5).y / 5,
+            Grid(placePos, 5).z / 5
+        };
+        newPaths[BlockPaths.Length] = blockPath + ".png";
 
-            RemoveBlock(destroyPos);
-            Teleport(local.OwnerClientId, local.transform.position, local.transform.rotation);
-            local._abilityChargingNormal.SetChargeLerp(1);
-        }
+        BlockPositions = newPositions;
+        BlockPaths = newPaths;
+
+        Teleport(local.OwnerClientId, local.transform.position, local.transform.rotation);
+        local._abilityChargingNormal.SetChargeLerp(1);
+        
     }
 
     public static void LoadMapFromFile(string Mapname, string Position)
@@ -91,7 +85,7 @@ public class BrushManager
         float.TryParse(parts[0], out float x);
         float.TryParse(parts[1], out float y);
         float.TryParse(parts[2], out float z);
-        Vector3 pos = new(x, y, z);
+        Vector3 pos = new(x*5, y*5, z*5);
         MelonLogger.Msg($"Loading map: {Mapname} at position X: {pos.x}, Y: {pos.y}, Z: {pos.z}");
         string filePath = Path.Combine(MelonEnvironment.ModsDirectory, "CreativeMode\\Maps\\", Mapname + ".json");
         if (!File.Exists(filePath))
@@ -134,11 +128,6 @@ public class BrushManager
         MelonLogger.Msg("Saving map to: " + path);
         string json = JsonConvert.SerializeObject(data, Formatting.Indented);
         File.WriteAllText(path, json);
-    }
-    private void ToggleDeleteMode()
-    {
-        deleteMode = !deleteMode;
-        SendChatMessage("Delete mode: " + (deleteMode ? "ON" : "OFF"));
     }
 
     public void BrushActivate()
