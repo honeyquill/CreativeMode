@@ -28,10 +28,10 @@ public class BrushManager
     public void BrushOnUpdate()
     {
         if (!toggle) return;
+        var local = GetLocalBeetle();
+        local.ModifiersController.AddModifierLocal(ModifierType.ElectricAura, 10000, 0);
 
-        GetLocalBeetle().ModifiersController.AddModifierLocal(ModifierType.ElectricAura, 10000, 0);
-
-        if (GetLocalBeetle().ClassData.BeetleType != BeetleType.Cyborg) //doesnt work lol
+        if (local.ClassData.BeetleType != BeetleType.Cyborg) //doesnt work lol
         {
             SendChatMessage("Brush can only be used on cyborg, deactivating.");
             toggle = false;
@@ -42,11 +42,11 @@ public class BrushManager
             ToggleDeleteMode();
         }
 
-        if (GetLocalBeetle()._abilityChargingNormal.ChargeLerp != 0) return;
+        if (local._abilityChargingNormal.ChargeLerp != 0) return;
 
         if (!deleteMode)
         {
-            Vector3 placePos = Vector3.MoveTowards(GetLaserPos(), GetLocalBeetle().transform.position, 2.5f);
+            Vector3 placePos = Vector3.MoveTowards(GetLaserPos(), local.transform.position, 2.5f);
 
             PlaceBlock(blockPath + ".png", 5, placePos);
 
@@ -72,21 +72,27 @@ public class BrushManager
             BlockPositions = newPositions;
             BlockPaths = newPaths;
 
-            Teleport(GetLocalBeetle().OwnerClientId);
-            GetLocalBeetle()._abilityChargingNormal.SetChargeLerp(1);
+            Teleport(local.OwnerClientId, local.transform.position, local.transform.rotation);
+            local._abilityChargingNormal.SetChargeLerp(1);
         }
         else
         {
             Vector3 destroyPos = GetLaserPos();
 
             RemoveBlock(destroyPos);
-            Teleport(GetLocalBeetle().OwnerClientId);
-            GetLocalBeetle()._abilityChargingNormal.SetChargeLerp(1);
+            Teleport(local.OwnerClientId, local.transform.position, local.transform.rotation);
+            local._abilityChargingNormal.SetChargeLerp(1);
         }
     }
 
-    public static void LoadMapFromFile(string Mapname)
+    public static void LoadMapFromFile(string Mapname, string Position)
     {
+        string[] parts = Position.Split(',');
+        float.TryParse(parts[0], out float x);
+        float.TryParse(parts[1], out float y);
+        float.TryParse(parts[2], out float z);
+        Vector3 pos = new(x, y, z);
+
         string filePath = Path.Combine(MelonEnvironment.ModsDirectory, "CreativeMode\\Maps\\", Mapname + ".json");
         if (!File.Exists(filePath))
         {
@@ -107,11 +113,11 @@ public class BrushManager
         // Access example
         for (int i = 0; i < BlockPositions.Length; i++)
         {
-
+            
             PlaceBlock(BlockPaths[i], 5, new Vector3(
-                BlockPositions[i][0] * 5,
-                BlockPositions[i][1] * 5,
-                BlockPositions[i][2] * 5
+                BlockPositions[i][0] * 5 + pos.x,
+                BlockPositions[i][1] * 5 + pos.y,
+                BlockPositions[i][2] * 5 + pos.z
             ));
             MelonLogger.Msg($"X: {BlockPositions[i][0]}, Y: {BlockPositions[i][1]}, Z: {BlockPositions[i][2]}, Block: {BlockPaths[i]}");
         }
