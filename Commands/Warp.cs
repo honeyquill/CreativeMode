@@ -12,6 +12,8 @@ using Unity.Collections;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using System.Collections.Generic;
+using MelonLoader;
 
 namespace CreativeMode.Commands;
 
@@ -45,7 +47,7 @@ public class Warp : ChatCommand
                 ListWarps();
                 break;
             default:
-                WarpPlayer(args[0]);
+                WarpPlayer(args[0], playername);
                 break;
         }
     }
@@ -88,23 +90,7 @@ public class Warp : ChatCommand
 
         var list = warpList.Warps.ToList();
 
-        foreach (var warp in list)
-        {
-            if (!string.Equals(warpToDelete, warp.Name, StringComparison.OrdinalIgnoreCase))
-            {
-                break;
-            }
-
-            targetWarp = warp;
-        }
-
-        if (targetWarp == null)
-        {
-            SendChatMessage($"No warp found with the name '{warpToDelete}'.");
-            return;
-        }
-
-        list.Remove(targetWarp);
+        list.Remove(findWarp(list, warpToDelete));
         warpList.Warps = list.ToArray();
         var package = JsonConvert.SerializeObject(warpList, Formatting.Indented);
         File.WriteAllText(dataFile, package);
@@ -112,10 +98,18 @@ public class Warp : ChatCommand
         return;
     }
 
-    private static void WarpPlayer(string location)
+    private static void WarpPlayer(string location, string playerName)
     {
-        string json = File.ReadAllText(dataFile);
-        var warpData = JsonConvert.DeserializeObject<WarpData>(json);
+        WarpList warpList = fetchWarps();
+        var list = warpList.Warps.ToList();
+        
+        var warpData = findWarp(list, location);
+        if (warpData == null) return;
+
+        var actor = GetActorByName(playerName);
+        var teleportPosition = new Vector3(warpData.Position[0], warpData.Position[1], warpData.Position[2]);
+
+        Teleport(actor.OwnerClientId, teleportPosition, actor.transform.rotation);
     }
 
     public static void ListWarps()
@@ -160,6 +154,26 @@ public class Warp : ChatCommand
             warpList = new WarpList { Warps = new WarpData[0] };
 
         return warpList;
+    }
+
+    private static WarpData findWarp(List<WarpData> list, string desiredWarp)
+    {
+        WarpData targetWarp = null;
+
+        foreach (var warp in list)
+        {
+            if (string.Equals(desiredWarp, warp.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                targetWarp = warp;
+            }
+        }
+
+        if (targetWarp == null)
+        {
+            MelonLogger.Msg($"No warp found with the name '{desiredWarp}'.");
+        }
+
+        return targetWarp;
     }
 
 }
