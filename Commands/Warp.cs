@@ -3,7 +3,6 @@ using System;
 using static CreativeMode.Helpers.BeetleUtils;
 using static CreativeMode.Main;
 using Newtonsoft.Json;
-using UnityEngine.UI;
 using System.IO;
 using MelonLoader.Utils;
 using CreativeMode.Helpers;

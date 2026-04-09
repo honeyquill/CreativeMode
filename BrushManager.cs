@@ -92,7 +92,7 @@ public class BrushManager
         float.TryParse(parts[1], out float y);
         float.TryParse(parts[2], out float z);
         Vector3 pos = new(x, y, z);
-
+        MelonLogger.Msg($"Loading map: {Mapname} at position X: {pos.x}, Y: {pos.y}, Z: {pos.z}");
         string filePath = Path.Combine(MelonEnvironment.ModsDirectory, "CreativeMode\\Maps\\", Mapname + ".json");
         if (!File.Exists(filePath))
         {
