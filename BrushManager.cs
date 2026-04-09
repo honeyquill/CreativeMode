@@ -85,12 +85,12 @@ public class BrushManager
         }
     }
 
-    public static void LoadMapFromFile()
+    public static void LoadMapFromFile(string Mapname)
     {
-        string filePath = Path.Combine(MelonEnvironment.ModsDirectory, "Map.json");
+        string filePath = Path.Combine(MelonEnvironment.ModsDirectory, "CreativeMode\\Maps\\", Mapname + ".json");
         if (!File.Exists(filePath))
         {
-            SendChatMessage("Map file not found.");
+            SendChatMessage(filePath);
             return;
         }
 
@@ -117,16 +117,17 @@ public class BrushManager
         }
     }
 
-    public static void WriteMapTofile()
+    public static void WriteMapTofile(string name)
     {
         MapData data = new MapData()
         {
             positions = BlockPositions,
             paths = BlockPaths
         };
-
+        string path = Path.Combine(MelonEnvironment.ModsDirectory, "CreativeMode/Maps/", name + ".json");
+        MelonLogger.Msg("Saving map to: " + path);
         string json = JsonConvert.SerializeObject(data, Formatting.Indented);
-        File.WriteAllText(Path.Combine(MelonEnvironment.ModsDirectory, "Map.json"), json);
+        File.WriteAllText(path, json);
     }
     private void ToggleDeleteMode()
     {

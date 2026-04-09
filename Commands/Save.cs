@@ -10,6 +10,6 @@ public class Save : ChatCommand
     public Save() : base("save", "Saves Map to file", ExecutePing, 0) { }
     private static void ExecutePing(string[] args, string playername)
     {
-        WriteMapTofile();
+        WriteMapTofile(args[0]);
     }
 }

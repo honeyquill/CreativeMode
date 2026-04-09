@@ -22,7 +22,7 @@ namespace CreativeMode.Helpers
 
         public static Material LoadTexture(string path)
         {
-            string Modpath = Path.Combine(MelonEnvironment.ModsDirectory, "Blocks", path);
+            string Modpath = Path.Combine(MelonEnvironment.ModsDirectory, "CreativeMode/Blocks", path);
             if (!File.Exists(Modpath))
             {
                 return null;
