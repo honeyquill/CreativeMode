@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using CreativeMode.Commands;
 using MelonLoader;
+using MelonLoader.Utils;
 using Main = CreativeMode.Main;
 [assembly: MelonAdditionalDependencies("ChatCommands")]
 [assembly: MelonInfo(typeof(Main), "CreativeMode", "1.0", "Bee & Spike")]
