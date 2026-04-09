@@ -11,6 +11,7 @@ using Harmony;
 using Unity.Collections;
 using System.Linq;
 using HarmonyLib;
+using UnityEngine;
 
 namespace CreativeMode.Commands;
 
@@ -35,7 +36,7 @@ public class Warp : ChatCommand
                     return;
                 }
 
-                SaveWarp(args[1], playername);
+                SaveWarp(args[1], GetActorByName(playername).transform.position);
                 break;
             case "delete":
                 deleteWarp(args[1]);
@@ -49,10 +50,8 @@ public class Warp : ChatCommand
         }
     }
 
-    public static void SaveWarp(string warpName, string PlayerName)
+    public static void SaveWarp(string warpName, Vector3 Position)
     {
-        var actor = GetActorByName(PlayerName);
-
         Directory.CreateDirectory(warpsPath);
         WarpList warpList = fetchWarps();
 
@@ -66,11 +65,10 @@ public class Warp : ChatCommand
         }
 
         //Real function begins here
-        var pos = actor.transform.position;
         var newWarp = new WarpData
         {
             Name = warpName,
-            Position = new float[] { pos.x, pos.y, pos.z }
+            Position = new float[] { Position.x, Position.y, Position.z }
         };
 
         list.Add(newWarp);
@@ -114,15 +112,12 @@ public class Warp : ChatCommand
         return;
     }
 
-
     private static void WarpPlayer(string location)
     {
         string json = File.ReadAllText(dataFile);
         var warpData = JsonConvert.DeserializeObject<WarpData>(json);
     }
 
-    
-    
     public static void ListWarps()
     {
         Directory.CreateDirectory(warpsPath);
