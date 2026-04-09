@@ -11,7 +11,7 @@ namespace CreativeMode.Helpers;
 
 public static class BeetleUtils
     {
-        public static void Teleport(ulong beetleID)
+        public static void Teleport(ulong beetleID, Vector3 Pos, Quaternion rotation)
         {
             BeetleActor beetleActor = GetActorByID(beetleID);
             var MapInitializer = UnityEngine.Object.FindObjectsOfType<Il2Cpp.MapInitializer>()[0];
@@ -20,8 +20,8 @@ public static class BeetleUtils
             Vector3 OriginalSpawnPos = MapInitializer.SpawnPositions[0].spawnTransform.position;
             Quaternion OriginalSpawnRotaion = MapInitializer.SpawnPositions[0].spawnTransform.rotation;
 
-            MapInitializer.SpawnPositions[0].spawnTransform.position = beetleActor.transform.position;
-            MapInitializer.SpawnPositions[0].spawnTransform.rotation = beetleActor.transform.rotation;
+            MapInitializer.SpawnPositions[0].spawnTransform.position = Pos;
+            MapInitializer.SpawnPositions[0].spawnTransform.rotation = rotation;
 
             prefabSpawner.SpawnClassAndSetTeam(beetleID, TeamType.Blue, (int)beetleActor.ClassData.BeetleType);
             GetActorByID(beetleID)._team.Value = (int)beetleActor.Team;
