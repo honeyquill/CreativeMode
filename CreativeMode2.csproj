@@ -98,8 +98,10 @@
     <Compile Include="Commands\Load.cs" />
     <Compile Include="Commands\Ping.cs" />
     <Compile Include="Commands\Save.cs" />
+    <Compile Include="Commands\Warp.cs" />
     <Compile Include="Helpers\BeetleUtils.cs" />
     <Compile Include="Helpers\BlockPlacer.cs" />
+    <Compile Include="Helpers\WarpData.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="BrushManager.cs" />
     <Compile Include="NullableAttributes.cs" />
