@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System.IO;
 using System.Linq;
 using CreativeMode.Commands;
 using MelonLoader;
@@ -12,6 +13,8 @@ public class Main : MelonMod
 {
     public static Main? Instance { get; private set; }
     public BrushManager? BrushManager;
+
+    public string warpsPath = Path.Combine(MelonEnvironment.ModsDirectory, "Warps");
 
     public override void OnInitializeMelon()
     {
@@ -31,7 +34,8 @@ public class Main : MelonMod
         chatCommands.RegisterCommand("grav", new DisableGravity());
         chatCommands.RegisterCommand("save", new Save());
         chatCommands.RegisterCommand("load", new Load());
-
+        chatCommands.RegisterCommand("Warp", new Warp());
+        Directory.CreateDirectory(warpsPath);
 
     }
 
