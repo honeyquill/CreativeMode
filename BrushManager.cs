@@ -20,6 +20,8 @@ public class BrushManager
     public static float[][] BlockPositions = new float[0][];
     // Parallel array for block paths
     public static string[] BlockPaths = new string[0];
+    public static bool[][] Faces = new bool[0][];
+    public static string[] Properties = new string[0];
 
     public bool toggle = false;
     public string blockPath = "stone-bricks";
@@ -89,10 +91,14 @@ public class BrushManager
 
         // Deserialize as object with two arrays
         var data = JsonConvert.DeserializeObject<MapData>(json);
+        MelonLogger.Msg(data);
+        MelonLogger.Msg(data.Faces[0]);
         if (data != null)
         {
             BlockPositions = data.positions;
             BlockPaths = data.paths;
+            Faces = data.Faces;
+            Properties = data.Properties;
         }
 
         // Access example
@@ -102,8 +108,8 @@ public class BrushManager
             PlaceBlock(BlockPaths[i], 5, new Vector3(
                 BlockPositions[i][0] * 5 + pos.x,
                 BlockPositions[i][1] * 5 + pos.y,
-                BlockPositions[i][2] * 5 + pos.z
-            ));
+                BlockPositions[i][2] * 5 + pos.z), Faces[i][0], Faces[i][1], Faces[i][2], Properties[i]
+            );
             MelonLogger.Msg($"X: {BlockPositions[i][0]}, Y: {BlockPositions[i][1]}, Z: {BlockPositions[i][2]}, Block: {BlockPaths[i]}");
         }
     }
@@ -140,12 +146,12 @@ public class BrushManager
         toggle = false;
     }
 
-    private Vector3 GetLaserPos()
+    public static Vector3 GetLaserPos()
     {
         return GetLocalCyborg()!._laserEndPoint;
     }
 
-    private BeetleClass_Cyborg? GetLocalCyborg()
+    public static BeetleClass_Cyborg? GetLocalCyborg()
     {
         var allCyborgs = UnityEngine.Object.FindObjectsOfType<Il2Cpp.BeetleClass_Cyborg>();
         if (allCyborgs.Length == 0) { return null; }
@@ -161,5 +167,7 @@ public class BrushManager
     {
         public float[][] positions = new float[0][];
         public string[] paths = new string[0];
+        public bool[][] Faces = new bool[0][];
+        public string[] Properties = new string[0];
     }
 }

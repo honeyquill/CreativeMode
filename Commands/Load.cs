@@ -1,7 +1,9 @@
 ﻿using ChatCommands;
+using Il2Cpp;
 using System;
-using static CreativeMode.Helpers.BeetleUtils;
+using System.Reflection;
 using static BrushManager;
+using static CreativeMode.Helpers.BeetleUtils;
 
 namespace CreativeMode.Commands;
 

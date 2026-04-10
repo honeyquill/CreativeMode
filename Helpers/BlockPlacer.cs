@@ -1,5 +1,6 @@
 ﻿using Il2Cpp;
 using MelonLoader.Utils;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,9 +18,11 @@ namespace CreativeMode.Helpers
         private static readonly Dictionary<string, Material> s_materialCache = new();
         private static readonly Stack<GameObject> s_pool = new();
         private static readonly List<GameObject> s_active = new();
+        private static readonly Dictionary<int, Mesh> s_meshCache = new();
         private static Mesh s_sharedCubeMesh;
+        private static Material s_fallbackMaterial;
 
-        public static Material LoadTexture(string path)
+        public static Material LoadTexture(string path,Vector2 scale,int side)
         {
             string Modpath = Path.Combine(MelonEnvironment.ModsDirectory, "CreativeMode/Blocks", path);
             if (!File.Exists(Modpath))
@@ -27,40 +30,47 @@ namespace CreativeMode.Helpers
                 return null;
             }
             byte[] fileData = File.ReadAllBytes(Modpath);
-            Texture2D texture = new Texture2D(2, 2); 
-            texture.LoadImage(fileData); 
-            texture.filterMode = FilterMode.Point; 
-            texture.wrapMode = TextureWrapMode.Clamp;
+            Texture2D texture = new Texture2D(2, 2);
+            texture.LoadImage(fileData);
+            texture.filterMode = FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Repeat;
+            
 
             Material mat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
             mat.SetColor("_BaseColor", new Color(0.8f, 0.8f, 0.8f, 1f));
             mat.enableInstancing = true;
             mat.mainTexture = texture;
+            mat.mainTextureScale = scale;
+            switch (side)
+            {
+                case 1: // Top
+                    mat.SetColor("_BaseColor", new Color(1.2f, 1.2f, 1.2f, 1f));
+                    break;
+                case 2: // Bottom
+                    mat.SetColor("_BaseColor", new Color(0.6f, 0.6f, 0.6f, 1f));
+                    break;
+                default:
+                    break;
+            }
+
             return mat;
         }
 
-        // Returns a material for the exact path or null if not found.
-        private static Material GetMaterialIfExists(string path)
+        // Returns a material, falling back to the fallback when path is missing or invalid.
+        private static Material GetOrCreateMaterial(string path, Vector2 scale, int side)
         {
-            if (s_materialCache.TryGetValue(path, out var mat))
+            bool slab = scale != Vector2.one;
+            if (s_materialCache.TryGetValue(path + slab + side, out var mat))
                 return mat;
 
-            var loaded = LoadTexture(path);
-            if (loaded != null)
-                s_materialCache[path] = loaded;
+            var loaded = LoadTexture(path, scale,side);
+            if (loaded == null)
+            {
+                s_materialCache[path + slab + side] = null;
+                return null;
+            }
 
-            return loaded;
-        }
-
-        // Returns a material, falling back to a magenta fallback when path is missing or invalid.
-        private static Material GetOrCreateMaterial(string path)
-        {
-
-            if (s_materialCache.TryGetValue(path, out var mat))
-                return mat;
-
-            var loaded = LoadTexture(path);
-            s_materialCache[path] = loaded;
+            s_materialCache[path + slab + side] = loaded;
             return loaded;
         }
 
@@ -73,66 +83,84 @@ namespace CreativeMode.Helpers
             );
         }
 
-        // Builds a single shared subdivided cube mesh (UVs, normals, submeshes) once.
-        private static Mesh GetSharedCubeMesh()
+        // Prebuilt canonical vertices used for all mesh variants (24 verts)
+        private static readonly Vector3[] s_cubeVertices = {
+            // Front
+            new Vector3(-0.5f,-0.5f,0.5f),
+            new Vector3(0.5f,-0.5f,0.5f),
+            new Vector3(0.5f,0.5f,0.5f),
+            new Vector3(-0.5f,0.5f,0.5f),
+            // Back
+            new Vector3(0.5f,-0.5f,-0.5f),
+            new Vector3(-0.5f,-0.5f,-0.5f),
+            new Vector3(-0.5f,0.5f,-0.5f),
+            new Vector3(0.5f,0.5f,-0.5f),
+            // Left
+            new Vector3(-0.5f,-0.5f,-0.5f),
+            new Vector3(-0.5f,-0.5f,0.5f),
+            new Vector3(-0.5f,0.5f,0.5f),
+            new Vector3(-0.5f,0.5f,-0.5f),
+            // Right
+            new Vector3(0.5f,-0.5f,0.5f),
+            new Vector3(0.5f,-0.5f,-0.5f),
+            new Vector3(0.5f,0.5f,-0.5f),
+            new Vector3(0.5f,0.5f,0.5f),
+            // Top
+            new Vector3(-0.5f,0.5f,0.5f),
+            new Vector3(0.5f,0.5f,0.5f),
+            new Vector3(0.5f,0.5f,-0.5f),
+            new Vector3(-0.5f,0.5f,-0.5f),
+            // Bottom
+            new Vector3(-0.5f,-0.5f,-0.5f),
+            new Vector3(0.5f,-0.5f,-0.5f),
+            new Vector3(0.5f,-0.5f,0.5f),
+            new Vector3(-0.5f,-0.5f,0.5f)
+        };
+
+        // Map for canonical triangle sets
+        private static readonly int[] s_sideTriangles = {
+            0,1,2, 0,2,3,      // Front
+            4,5,6, 4,6,7,      // Back
+            8,9,10, 8,10,11,   // Left
+            12,13,14, 12,14,15 // Right
+        };
+        private static readonly int[] s_topTriangles = { 16, 17, 18, 16, 18, 19 };
+        private static readonly int[] s_bottomTriangles = { 20, 21, 22, 20, 22, 23 };
+
+        // Creates or returns a cached mesh that contains only the enabled submeshes.
+        // mask bits: 1 = sides, 2 = top, 4 = bottom
+        private static Mesh GetSharedMeshForMask(int mask)
         {
-            if (s_sharedCubeMesh != null) return s_sharedCubeMesh;
+            if (s_meshCache.TryGetValue(mask, out var cached))
+                return cached;
 
             Mesh mesh = new Mesh();
-            mesh.name = "Shared_3_Side_Cube";
+            mesh.name = "Shared_Mesh_mask_" + mask;
+            mesh.vertices = s_cubeVertices;
 
-            Vector3[] vertices = {
-        // Front
-        new Vector3(-0.5f,-0.5f,0.5f),
-        new Vector3(0.5f,-0.5f,0.5f),
-        new Vector3(0.5f,0.5f,0.5f),
-        new Vector3(-0.5f,0.5f,0.5f),
-        // Back
-        new Vector3(0.5f,-0.5f,-0.5f),
-        new Vector3(-0.5f,-0.5f,-0.5f),
-        new Vector3(-0.5f,0.5f,-0.5f),
-        new Vector3(0.5f,0.5f,-0.5f),
-        // Left
-        new Vector3(-0.5f,-0.5f,-0.5f),
-        new Vector3(-0.5f,-0.5f,0.5f),
-        new Vector3(-0.5f,0.5f,0.5f),
-        new Vector3(-0.5f,0.5f,-0.5f),
-        // Right
-        new Vector3(0.5f,-0.5f,0.5f),
-        new Vector3(0.5f,-0.5f,-0.5f),
-        new Vector3(0.5f,0.5f,-0.5f),
-        new Vector3(0.5f,0.5f,0.5f),
-        // Top
-        new Vector3(-0.5f,0.5f,0.5f),
-        new Vector3(0.5f,0.5f,0.5f),
-        new Vector3(0.5f,0.5f,-0.5f),
-        new Vector3(-0.5f,0.5f,-0.5f),
-        // Bottom
-        new Vector3(-0.5f,-0.5f,-0.5f),
-        new Vector3(0.5f,-0.5f,-0.5f),
-        new Vector3(0.5f,-0.5f,0.5f),
-        new Vector3(-0.5f,-0.5f,0.5f)
-    };
+            // Count enabled submeshes
+            int subCount = 0;
+            if ((mask & 1) != 0) subCount++;
+            if ((mask & 2) != 0) subCount++;
+            if ((mask & 4) != 0) subCount++;
 
-            mesh.vertices = vertices;
+            mesh.subMeshCount = Math.Max(1, subCount); // ensure at least 1 to avoid errors
 
-            // 3 submeshes: sides, top, bottom
-            mesh.subMeshCount = 3;
+            int subIndex = 0;
+            if ((mask & 1) != 0)
+            {
+                mesh.SetTriangles(s_sideTriangles, subIndex++);
+            }
+            if ((mask & 2) != 0)
+            {
+                mesh.SetTriangles(s_topTriangles, subIndex++);
+            }
+            if ((mask & 4) != 0)
+            {
+                mesh.SetTriangles(s_bottomTriangles, subIndex++);
+            }
 
-            int[] sideTriangles = {
-        0,1,2, 0,2,3,      // Front
-        4,5,6, 4,6,7,      // Back
-        8,9,10, 8,10,11,   // Left
-        12,13,14, 12,14,15 // Right
-    };
-            int[] topTriangles = { 16, 17, 18, 16, 18, 19 };
-            int[] bottomTriangles = { 20, 21, 22, 20, 22, 23 };
-
-            mesh.SetTriangles(sideTriangles, 0);
-            mesh.SetTriangles(topTriangles, 1);
-            mesh.SetTriangles(bottomTriangles, 2);
-
-            // UVs
+            // UVs (same canonical mapping)
             Vector2[] uvs = new Vector2[24];
             for (int i = 0; i < 6; i++)
             {
@@ -146,12 +174,12 @@ namespace CreativeMode.Helpers
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
 
-            s_sharedCubeMesh = mesh;
-            return s_sharedCubeMesh;
+            s_meshCache[mask] = mesh;
+            return mesh;
         }
 
         // Pooling helper
-        private static GameObject RentBlockObject()
+        private static GameObject RentBlockObject(Vector3 size)
         {
             if (s_pool.Count > 0)
             {
@@ -162,7 +190,7 @@ namespace CreativeMode.Helpers
                 var bc = go.GetComponent<BoxCollider>();
                 if (bc == null) bc = go.AddComponent<BoxCollider>();
                 bc.center = Vector3.zero;
-                bc.size = Vector3.one;
+                bc.size = size;
                 bc.isTrigger = false;
 
                 return go;
@@ -185,15 +213,42 @@ namespace CreativeMode.Helpers
             s_pool.Push(go);
         }
 
-        // Main spawn path uses cached materials + shared mesh + pooling.
-        public static void PlaceBlock(string path, float size, Vector3 pos, bool? grid = true)
+        public static Material GetMaterialByType(string path, Vector2 size, int side)
         {
-            // Acquire materials (cached). Side material must exist or fallback.
-            Material sideMat = GetOrCreateMaterial(path);
+            switch (side)
+            {
+                case 0: // Side
+                    return GetOrCreateMaterial(path, size, side) ?? GetOrCreateMaterial(path.Replace(".png", "s.png"), size, side);
+                case 1: // Top
+                    return GetOrCreateMaterial(path?.Replace(".png", "_top.png"), Vector2.one, side) ?? GetOrCreateMaterial(path.Replace(".png", "s.png").Replace(".png", "_top.png"), Vector2.one, side) ?? GetOrCreateMaterial(path, Vector2.one, side) ?? GetOrCreateMaterial(path.Replace(".png", "s.png"), Vector2.one, side);
+                case 2: // Bottom
+                    return GetOrCreateMaterial(path?.Replace(".png", "_bottom.png"), Vector2.one, side) ?? GetOrCreateMaterial(path.Replace(".png", "s.png").Replace(".png", "_bottom.png"), Vector2.one, side) ?? GetOrCreateMaterial(path, Vector2.one, side) ?? GetOrCreateMaterial(path.Replace(".png", "s.png"), Vector2.one, side) ?? GetMaterialByType(path, Vector2.one, 2);
+                default:
+                    return null;
+            }
+        }
 
-            // Top/bottom: prefer explicit textures, but fall back to side material if they don't exist.
-            Material topMat = GetMaterialIfExists(path?.Replace(".png", "_top.png")) ?? sideMat;
-            Material bottomMat = GetMaterialIfExists(path?.Replace(".png", "_bottom.png")) ?? topMat ?? sideMat;
+
+
+        public static void PlaceBlock(string path, float size, Vector3 pos, bool renderSides = true, bool renderTop = true, bool renderBottom = true, string properties = "", bool? grid = true)
+        {
+            bool slab;
+            string realpath = path.Replace("_slab", "");
+            if (realpath != path) slab = true; else slab = false;
+            if(properties.Contains("double")) slab = false;
+            Material sideMat;
+            if (slab)
+            {
+                sideMat = GetMaterialByType(realpath, new Vector2(1, 0.5f),0);
+            }
+            else
+            {
+                sideMat = GetMaterialByType(realpath, Vector2.one, 0);
+            }
+
+
+            Material topMat = GetMaterialByType(realpath, new Vector2(1, 1f), 1);
+            Material bottomMat = GetMaterialByType(realpath, new Vector2(1, 1f), 2);
 
             // Snap the position to the nearest grid point
             Vector3 gridCenter = Grid(pos, size);
@@ -201,20 +256,28 @@ namespace CreativeMode.Helpers
             Vector3 gridP1 = gridCenter + new Vector3(size / 2, size / 2, size / 2);
             Vector3 gridP2 = gridCenter - new Vector3(size / 2, size / 2, size / 2);
 
-            GameObject cube = RentBlockObject();
+            GameObject cube = RentBlockObject(new Vector3(1,0.5f,1));
 
-            // Assign shared mesh (no mesh allocations)
+            // Determine mesh mask and materials order. Submesh order is: sides (if present), top (if present), bottom (if present)
+            int mask = 0;
+            if (renderSides) mask |= 1;
+            if (renderTop) mask |= 2;
+            if (renderBottom) mask |= 4;
+
+            // Ensure at least one face is rendered; if none are requested, render sides as fallback for visibility/perf predictability
+            if (mask == 0) mask = 1;
+
             var mf = cube.GetComponent<MeshFilter>();
-            mf.sharedMesh = GetSharedCubeMesh();
+            mf.sharedMesh = GetSharedMeshForMask(mask);
 
             var mr = cube.GetComponent<MeshRenderer>();
-            // Use sharedMaterials to avoid instantiating new material copies for renderer
-            mr.sharedMaterials = new Material[]
-            {
-        sideMat,  // sides
-        topMat,   // top
-        bottomMat // bottom
-            };
+
+            var materials = new List<Material>(3);
+            if ((mask & 1) != 0) materials.Add(sideMat);
+            if ((mask & 2) != 0) materials.Add(topMat);
+            if ((mask & 4) != 0) materials.Add(bottomMat);
+
+            mr.sharedMaterials = materials.ToArray();
 
             // Reduce renderer overhead
             mr.shadowCastingMode = ShadowCastingMode.Off;
@@ -222,14 +285,20 @@ namespace CreativeMode.Helpers
 
             // Set transform
             cube.transform.position = (gridP1 + gridP2) / 2f;
+            if (slab && properties.Contains("bottom")) cube.transform.position += new Vector3(0, -size * 0.5f, 0); // adjust for slab height
             cube.transform.rotation = Quaternion.identity;
+            if (slab)
+            {
+                gridP1.y *= 0.5f;
+                gridP2.y *= 0.5f;
+            }
             cube.transform.localScale = new Vector3(
                 Mathf.Abs(gridP2.x - gridP1.x),
                 Mathf.Abs(gridP2.y - gridP1.y),
                 Mathf.Abs(gridP2.z - gridP1.z)
             );
 
-            // Ensure collider fits: keep collider size at (1,1,1) and rely on transform scale to size it.
+
             var box = cube.GetComponent<BoxCollider>();
             if (box == null) box = cube.AddComponent<BoxCollider>();
             box.center = Vector3.zero;
