@@ -23,18 +23,9 @@ public class BrushManager
 
     public bool toggle = false;
     public string blockPath = "stone-bricks";
-    float deltaTime = 0.0f;
 
     public void BrushOnUpdate()
     {
-
-        // Smooth delta time
-        deltaTime += (Time.deltaTime - deltaTime) * 0.1f;
-
-        float fps = 1.0f / deltaTime;
-        float ms = deltaTime * 1000.0f;
-
-        MelonLogger.Msg($"FPS: {fps:F1} | Frame Time: {ms:F2} ms");
 
         if (!toggle) return;
         var local = GetLocalBeetle();

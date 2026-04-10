@@ -14,7 +14,6 @@ public class Main : MelonMod
 {
     public static Main? Instance { get; private set; }
     public BrushManager? BrushManager;
-    float deltaTime = 0.0f;
 
     public string warpsPath = Path.Combine(MelonEnvironment.ModsDirectory, "Warps");
 
