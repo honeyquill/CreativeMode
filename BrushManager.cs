@@ -1,18 +1,23 @@
 ﻿#nullable enable
 using Il2Cpp;
+using Il2CppSystem;
+using Il2CppSystem.Collections.Generic;
 using Il2CppSystem.Collections.Generic;
 using Il2CppSystem.IO;
 using MelonLoader;
 using MelonLoader.Utils;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Playables;
 using UnityEngine.Rendering;
 using UnityEngine.Windows;
 using static CreativeMode.Helpers.BeetleUtils;
 using static CreativeMode.Helpers.BlockPlacer;
+using static CreativeMode2.SpecialBlocks.SpecialBlocks;
 using static UnityEngine.GraphicsBuffer;
-using System;
 
 public class BrushManager
 {
@@ -25,6 +30,12 @@ public class BrushManager
 
     public bool toggle = false;
     public string blockPath = "stone-bricks";
+
+    public static System.Collections.Generic.Dictionary<string, System.Action<Vector3,string>> SpecialBlocks = new System.Collections.Generic.Dictionary<string, System.Action<Vector3, string>>()
+    {
+        { "dark_oak_button.png", (pos, Properties) => SpawnRed(pos) },
+        { "oak_button.png", (pos, Properties) => SpawnBlue(pos) }
+    };
 
     public void BrushOnUpdate()
     {
@@ -104,7 +115,15 @@ public class BrushManager
         // Access example
         for (int i = 0; i < BlockPositions.Length; i++)
         {
-            
+            if (SpecialBlocks.TryGetValue(BlockPaths[i], out System.Action<Vector3, string> action))
+            {
+                action(new Vector3(
+                    BlockPositions[i][0] * 5 + pos.x,
+                    BlockPositions[i][1] * 5 + pos.y,
+                    BlockPositions[i][2] * 5 + pos.z), Properties[i]);
+                continue;
+            }
+
             PlaceBlock(BlockPaths[i], 5, new Vector3(
                 BlockPositions[i][0] * 5 + pos.x,
                 BlockPositions[i][1] * 5 + pos.y,
@@ -112,6 +131,8 @@ public class BrushManager
             );
             MelonLogger.Msg($"X: {BlockPositions[i][0]}, Y: {BlockPositions[i][1]}, Z: {BlockPositions[i][2]}, Block: {BlockPaths[i]}");
         }
+        respawnall();
+
     }
 
     public static void WriteMapTofile(string name)
