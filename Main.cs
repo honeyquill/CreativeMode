@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using CreativeMode.Commands;
+using CreativeMode;
 using MelonLoader;
 using MelonLoader.Utils;
 using System.IO;
@@ -14,6 +15,7 @@ public class Main : MelonMod
 {
     public static Main? Instance { get; private set; }
     public BrushManager? BrushManager;
+    public MapLoader? MapLoader;
 
     public string warpsPath = Path.Combine(MelonEnvironment.ModsDirectory, "Warps");
 
@@ -21,6 +23,7 @@ public class Main : MelonMod
     {
         var chatCommands = MelonMod.RegisteredMelons.OfType<ChatCommands.Main>().FirstOrDefault();
         BrushManager = new BrushManager();
+        MapLoader = new MapLoader();
         Instance = this;
         
         if (chatCommands == null)
@@ -42,7 +45,7 @@ public class Main : MelonMod
 
     public override void OnUpdate()
     {
-
+        MapLoader?.OnUpdate();
         BrushManager?.BrushOnUpdate();
     }
 

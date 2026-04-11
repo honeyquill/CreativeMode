@@ -9,8 +9,8 @@ namespace CreativeMode.Commands;
 
 public class Load : ChatCommand
 {
-    public Load() : base("load", "Loads Map from file", ExecutePing, 0) { }
-    private static void ExecutePing(string[] args, string playername)
+    public Load() : base("load", "Loads Map from file", ExecuteLoad, 0) { }
+    public static void ExecuteLoad(string[] args, string playername)
     {
         LoadMapFromFile(args[0], args[1]);
     }

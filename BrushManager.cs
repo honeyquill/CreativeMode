@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Harmony;
 using Il2Cpp;
 using Il2CppSystem;
 using Il2CppSystem.Collections.Generic;
@@ -16,7 +17,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Windows;
 using static CreativeMode.Helpers.BeetleUtils;
 using static CreativeMode.Helpers.BlockPlacer;
-using static CreativeMode2.SpecialBlocks.SpecialBlocks;
+using static CreativeMode.SpecialBlocks.SpecialBlocks;
 using static UnityEngine.GraphicsBuffer;
 
 public class BrushManager
@@ -34,7 +35,8 @@ public class BrushManager
     public static System.Collections.Generic.Dictionary<string, System.Action<Vector3,string>> SpecialBlocks = new System.Collections.Generic.Dictionary<string, System.Action<Vector3, string>>()
     {
         { "dark_oak_button.png", (pos, Properties) => SpawnRed(pos) },
-        { "oak_button.png", (pos, Properties) => SpawnBlue(pos) }
+        { "oak_button.png", (pos, Properties) => SpawnBlue(pos) },
+        { "snow.png", (pos, Properties) => SetBunny(pos, Properties) }
     };
 
     public void BrushOnUpdate()
