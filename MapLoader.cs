@@ -32,7 +32,7 @@ namespace CreativeMode
 
             if (wasCommenced != matchDataManager.ActiveMatch.wasCommenced && !wasCommenced) //Match just loaded
             {
-                string[] arr = { "map", "1000,0,0" };
+                string[] arr = { "map", "1000,0,1000" };
                 ExecuteLoad(arr,"");
             }
             wasCommenced = matchDataManager.ActiveMatch.wasCommenced;
