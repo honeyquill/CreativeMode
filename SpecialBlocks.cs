@@ -72,6 +72,7 @@ namespace CreativeMode.SpecialBlocks
 
                 Norm = (track.GetChild(4).position - track.GetChild(3).position).normalized;
                 track.GetChild(5).position = track.GetChild(4).position + Norm * spacing * 10f + Vector3.down * 100f;
+                track.GetChild(1).position += Vector3.down * 10f;
             }
         }
     }
