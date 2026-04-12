@@ -17,12 +17,8 @@ namespace CreativeMode
         BunnyPathJumper bunny = null;
         public void OnUpdate()
         {
-            //if (bunny == null)
-            //{
-            //    bunny = UnityEngine.Object.FindObjectOfType<BunnyPathJumper>();
-            //}
-            //else
-            //    bunny.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+
+
 
             if(matchDataManager == null || matchDataManager.ActiveMatch == null)
             {

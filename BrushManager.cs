@@ -134,7 +134,7 @@ public class BrushManager
             MelonLogger.Msg($"X: {BlockPositions[i][0]}, Y: {BlockPositions[i][1]}, Z: {BlockPositions[i][2]}, Block: {BlockPaths[i]}");
         }
         respawnall();
-
+        OffsetBunny();
     }
 
     public static void WriteMapTofile(string name)

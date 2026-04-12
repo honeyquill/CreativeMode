@@ -202,7 +202,7 @@ namespace CreativeMode.Helpers
             obj.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off; //disable shadows by default for performance
             var collider = obj.AddComponent<BoxCollider>();
             collider.center = Vector3.zero;
-            collider.size = Vector3.one;
+            collider.size = Vector3.one*1.01f;
             collider.isTrigger = false;
             return obj;
         }
