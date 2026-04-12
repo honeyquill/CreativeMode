@@ -120,4 +120,7 @@
     <Target Name="AfterBuild">
     </Target>
     -->
+  <Target Name="AfterBuild">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="C:\Program Files (x86)\Steam\steamapps\common\Beetleball Demo\Mods" />
+  </Target>
 </Project>

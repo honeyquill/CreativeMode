@@ -42,9 +42,9 @@ namespace CreativeMode.SpecialBlocks
             Vector3 Dungpos = bunnyspawner.bunnyPrefab.pooSpawnPosition.position;
             MelonLogger.Msg("Setting bunny block at: " + pos + " with layers: " + layers);
             bunnyspawner.tracks[layers / 5].GetChild((layers - 1) % 4 + 1).position = pos;
+            
             if ((layers - 1) % 4 + 1 == 1)
             {
-                bunnyspawner.tracks[layers / 5].GetChild(1).position = pos + Dung - new Vector3(0, Dung.y, 0);
                 bunnyspawner.tracks[layers / 5].GetChild(0).position = pos + Dung - new Vector3(0, Dung.y, 0);
             }
         }
@@ -53,21 +53,25 @@ namespace CreativeMode.SpecialBlocks
        {
             var bunnyspawner = UnityEngine.Object.FindObjectOfType<BunnySpawner>();
             float spacing = 12.65f; // sqrt(4²,12²) its a number that worked before
-            for (int i = 1; i < bunnyspawner.tracks[0].childCount; i++)
-            {
-                Vector3 previousPos = bunnyspawner.tracks[0].GetChild(i - 1).position;
-                Vector3 currentPos = bunnyspawner.tracks[0].GetChild(i).position;
-                Vector3 norm = (currentPos - previousPos).normalized;
 
-                bunnyspawner.tracks[0].GetChild(i).position = currentPos + norm * spacing;
-            }
-            for (int i = 1; i < bunnyspawner.tracks[1].childCount; i++)
-            {
-                Vector3 previousPos = bunnyspawner.tracks[1].GetChild(i - 1).position;
-                Vector3 currentPos = bunnyspawner.tracks[1].GetChild(i).position;
-                Vector3 norm = (currentPos - previousPos).normalized;
 
-                bunnyspawner.tracks[1].GetChild(i).position = currentPos + norm * spacing;
+            foreach(Transform track in bunnyspawner.tracks)
+            {
+                Vector3 Norm = (track.GetChild(2).position - track.GetChild(1).position).normalized;
+                track.GetChild(0).position -= Norm * spacing * 10f + Vector3.up * 100f;
+
+                for (int i = 1; i < track.childCount; i++)
+                {
+                    Vector3 previousPos = track.GetChild(i - 1).position;
+                    Vector3 currentPos = track.GetChild(i).position;
+                    Vector3 norm = (currentPos - previousPos).normalized;
+
+                    track.GetChild(i).position = currentPos + norm * spacing;
+                    MelonLogger.Msg(track.GetChild(1).position);
+                }
+
+                Norm = (track.GetChild(4).position - track.GetChild(3).position).normalized;
+                track.GetChild(5).position = track.GetChild(4).position + Norm * spacing * 10f + Vector3.down * 100f;
             }
         }
     }
