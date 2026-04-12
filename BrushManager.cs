@@ -96,7 +96,8 @@ public class BrushManager
         string filePath = Path.Combine(MelonEnvironment.ModsDirectory, "CreativeMode\\Maps\\", Mapname + ".json");
         if (!File.Exists(filePath))
         {
-            SendChatMessage(filePath);
+            SendChatMessage("There was a error loading the map check console..");
+            MelonLogger.Error("Map file not found: " + filePath);
             return;
         }
 
@@ -114,7 +115,6 @@ public class BrushManager
             Properties = data.Properties;
         }
 
-        // Access example
         for (int i = 0; i < BlockPositions.Length; i++)
         {
             if (SpecialBlocks.TryGetValue(BlockPaths[i], out System.Action<Vector3, string> action))
