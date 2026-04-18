@@ -13,20 +13,35 @@ namespace CreativeMode.SpecialBlocks
 
     public class SpecialBlocks
     {
-
-
-        public static void SpawnBlue(Vector3 pos)
+        public static void ChangeSpawn(Vector3 pos,string properties, TeamType team)
         {
+            Regex regex = new Regex(@"'facing': (.*)}");
+            var match = regex.Match(properties);
+            string Dir = "";
+            if (match.Success) Dir = match.Groups[1].Value;
+
+            Quaternion LookDir = CardinalToQuaternion(Dir);
+
             var MapInitializer = UnityEngine.Object.FindObjectsOfType<Il2Cpp.MapInitializer>()[0];
-            MapInitializer.SpawnPositions[0].spawnTransform.position = pos;
-            MelonLogger.Msg("Spawned blue block at: " + pos);
-        }
-        public static void SpawnRed(Vector3 pos)
-        {
-            var MapInitializer = UnityEngine.Object.FindObjectsOfType<Il2Cpp.MapInitializer>()[0];
-            MapInitializer.SpawnPositions[(TeamType)2].spawnTransform.position = pos;
+            MapInitializer.SpawnPositions[team].spawnTransform.position = pos;
+            MapInitializer.SpawnPositions[team].spawnTransform.rotation = LookDir;
             MelonLogger.Msg("Spawned red block at: " + pos);
         }
+
+        public static Quaternion CardinalToQuaternion(string Cardinal)
+        {
+            Vector3 direction = Vector3.forward; // default
+            switch (Cardinal)
+            {
+                case "north": direction = Vector3.right; break;
+                case "south": direction = Vector3.left; break;
+                case "east": direction = Vector3.forward; break;
+                case "west": direction = Vector3.back; break;
+            }
+
+            return Quaternion.LookRotation(direction);
+        }
+
         public static void SetBunny(Vector3 pos, string properties)
         {
             Regex regex = new Regex(@"'layers'\s*:\s*(\d+)");

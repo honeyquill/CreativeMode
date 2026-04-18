@@ -20,6 +20,7 @@ using static CreativeMode.Helpers.BlockPlacer;
 using static CreativeMode.SpecialBlocks.SpecialBlocks;
 using static UnityEngine.GraphicsBuffer;
 
+
 public class BrushManager
 {
     // Array of arrays for positions (x, y, z)
@@ -34,8 +35,8 @@ public class BrushManager
 
     public static System.Collections.Generic.Dictionary<string, System.Action<Vector3,string>> SpecialBlocks = new System.Collections.Generic.Dictionary<string, System.Action<Vector3, string>>()
     {
-        { "dark_oak_button.png", (pos, Properties) => SpawnRed(pos) },
-        { "oak_button.png", (pos, Properties) => SpawnBlue(pos) },
+        { "dark_oak_button.png", (pos, Properties) => ChangeSpawn(pos,Properties,(TeamType)2)},
+        { "oak_button.png", (pos, Properties) => ChangeSpawn(pos,Properties,0)},
         { "snow.png", (pos, Properties) => SetBunny(pos, Properties) }
     };
 
