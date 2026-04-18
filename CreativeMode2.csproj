@@ -108,8 +108,8 @@
     <Compile Include="Main.cs" />
     <Compile Include="BrushManager.cs" />
     <Compile Include="MapLoader.cs" />
+    <Compile Include="NoQueuing.cs" />
     <Compile Include="NullableAttributes.cs" />
-    <Compile Include="Penelty.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpecialBlocks.cs" />
   </ItemGroup>
