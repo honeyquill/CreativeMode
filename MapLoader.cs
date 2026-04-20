@@ -14,12 +14,8 @@ namespace CreativeMode
     {
         bool wasCommenced = false;
         MatchDataManager matchDataManager;
-        BunnyPathJumper bunny = null;
         public void OnUpdate()
         {
-
-
-
             if(matchDataManager == null || matchDataManager.ActiveMatch == null)
             {
                 matchDataManager = UnityEngine.Object.FindObjectOfType<MatchDataManager>();

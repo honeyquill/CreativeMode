@@ -2,26 +2,18 @@
 using Il2CppInterop.Runtime;
 using MelonLoader;
 using UnityEngine;
-
+using static CreativeMode.Helpers.BeetleUtils;
 public class NoQueuing
 {
-
-    public static void ShowPopUp()
-    {
-        var PopUpColor = new Il2CppSystem.Nullable<Color>(Color.white);
-        var PopUpFadeTime = new Il2CppSystem.Nullable<float>(1f);
-        PopupManager.Instance.ShowSimpleTextPopup("You cannot Queue With The Mod 'CreativeMode' By 'Spike And Bee'", PopupManager.Position.Bottom, 5f, PopUpColor, PopUpFadeTime);
-    }
-
     public static void OnMatchmakingStarted()
     {
         MatchmakingManager.Instance.SetIsMatchmaking(false);
-        ShowPopUp();
+        ShowPopUp("'You Cannot Queue With The Mod 'CreativeMode' by 'Spike and Bee'", PopupManager.Position.Bottom ,5f ,null ,3f);
     }
 
     public static void OnJoinedParty()
     {
         MatchmakingPartyManager.Instance.LeaveLobby();
-        ShowPopUp();
+        ShowPopUp("'You Cannot Join Parties With The Mod 'CreativeMode' by 'Spike and Bee'", PopupManager.Position.Bottom, 5f, null, 3f);
     }
 }

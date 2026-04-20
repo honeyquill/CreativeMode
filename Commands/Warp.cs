@@ -13,13 +13,13 @@ using HarmonyLib;
 using UnityEngine;
 using System.Collections.Generic;
 using MelonLoader;
+using static CreativeMode.ManageFiles;
 
 namespace CreativeMode.Commands;
 
 public class Warp : ChatCommand
 {
-    public static string warpsPath = Path.Combine(MelonEnvironment.ModsDirectory, "Warps");
-    private static string dataFile = Path.Combine(MelonEnvironment.ModsDirectory, "Warps", "data.json");
+    public static string warpsPath = WarpsFolder();
 
     public Warp()
         : base("warp", "warps you to a location| save, delete, list, [warp name]", ExecuteWarp, 1)
@@ -53,13 +53,10 @@ public class Warp : ChatCommand
 
     public static void SaveWarp(string warpName, Vector3 Position)
     {
-        Directory.CreateDirectory(warpsPath);
-        WarpList warpList = fetchWarps();
-
-        var list = warpList.Warps.ToList();
+        WarpData[] warpList = fetchWarps();
 
         // check duplicates
-        if (list.Any(w => string.Equals(w.Name, warpName, StringComparison.OrdinalIgnoreCase)))
+        if (warpList.Any(w => string.Equals(w.Name, warpName, StringComparison.OrdinalIgnoreCase)))
         {
             SendChatMessage($"A warp with the name '{warpName}' already exists.");
             return;
@@ -71,38 +68,31 @@ public class Warp : ChatCommand
             Name = warpName,
             Position = new float[] { Position.x, Position.y, Position.z }
         };
-
-        list.Add(newWarp);
-        warpList.Warps = list.ToArray();
-
-        var package = JsonConvert.SerializeObject(warpList, Formatting.Indented);
-        File.WriteAllText(dataFile, package);
+        var package = JsonConvert.SerializeObject(newWarp, Formatting.Indented);
+        string WarpPath = Path.Combine(warpsPath, newWarp.Name + ".json");
+        File.WriteAllText(WarpPath, package);
 
         SendChatMessage($"Warp '{warpName}' saved successfully.");
     }
 
     public static void deleteWarp(string warpToDelete)
     {
-        Directory.CreateDirectory(warpsPath);
-        WarpList warpList = fetchWarps();
-        WarpData targetWarp = null;
+        string WarpPath = Path.Combine(warpsPath ,warpToDelete + ".json");
 
-        var list = warpList.Warps.ToList();
+        if (!File.Exists(WarpPath))
+        {
+            SendChatMessage($"Warp {warpToDelete} not found please double check the name");
+            return;
+        }
 
-        list.Remove(findWarp(list, warpToDelete));
-        warpList.Warps = list.ToArray();
-        var package = JsonConvert.SerializeObject(warpList, Formatting.Indented);
-        File.WriteAllText(dataFile, package);
-        SendChatMessage($"Warp '{warpToDelete}' deleted successfully.");
-        return;
+        File.Delete(WarpPath);
     }
 
     private static void WarpPlayer(string location, string playerName)
     {
-        WarpList warpList = fetchWarps();
-        var list = warpList.Warps.ToList();
+        WarpData[] warpList = fetchWarps();
         
-        var warpData = findWarp(list, location);
+        var warpData = findWarp(warpList, location);
         if (warpData == null) return;
 
         var actor = GetActorByName(playerName);
@@ -114,48 +104,49 @@ public class Warp : ChatCommand
     public static void ListWarps()
     {
         Directory.CreateDirectory(warpsPath);
-        WarpList warpList = fetchWarps();
+        WarpData[] warpList = fetchWarps();
 
-        var list = warpList.Warps.ToList();
 
-        if (list.Count == 0)
+        if (warpList.Length == 0)
         {
             SendChatMessage("No warps found.");
             return;
         }
 
-        foreach (var warp in list)
+        foreach (var warp in warpList)
         {
             SendChatMessage($"Warp: {warp.Name}");
         }
     }
 
-    private static WarpList fetchWarps()
+    private static WarpData[] fetchWarps()
     {
-        WarpList warpList = null;
-        if (File.Exists(dataFile))
+        var warps = new List<WarpData>();
+
+        if (Directory.Exists(warpsPath))
         {
-            var json = File.ReadAllText(dataFile);
-            if (!string.IsNullOrWhiteSpace(json))
+            foreach (var file in Directory.GetFiles(warpsPath, "*.json"))
             {
+                var json = File.ReadAllText(file);
+                if (string.IsNullOrWhiteSpace(json)) continue;
+
                 try
                 {
-                    warpList = JsonConvert.DeserializeObject<WarpList>(json);
+                    var warp = JsonConvert.DeserializeObject<WarpData>(json);
+                    if (warp != null)
+                        warps.Add(warp);
                 }
                 catch
                 {
-                    warpList = null;
+                    // skip malformed files
                 }
             }
         }
 
-        if (warpList == null || warpList.Warps == null)
-            warpList = new WarpList { Warps = new WarpData[0] };
-
-        return warpList;
+        return warps.ToArray();
     }
 
-    private static WarpData findWarp(List<WarpData> list, string desiredWarp)
+    private static WarpData findWarp(WarpData[] list, string desiredWarp)
     {
         WarpData targetWarp = null;
 

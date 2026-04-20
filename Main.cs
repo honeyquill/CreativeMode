@@ -8,6 +8,8 @@ using MelonLoader.Utils;
 using System.IO;
 using System.Linq;
 using Main = CreativeMode.Main;
+using static CreativeMode.ManageFiles;
+
 [assembly: MelonAdditionalDependencies("ChatCommands")]
 [assembly: MelonInfo(typeof(Main), "CreativeMode", "1.0", "Bee & Spike")]
 
@@ -19,21 +21,22 @@ public class Main : MelonMod
     public BrushManager? BrushManager;
     public MapLoader? MapLoader;
 
-    public string warpsPath = Path.Combine(MelonEnvironment.ModsDirectory, "Warps");
-
     public override void OnInitializeMelon()
     {
-        Il2CppSystem.Action _onMatchmakingStarted;
-        Il2CppSystem.Action _onJoinedParty;
         var chatCommands = MelonMod.RegisteredMelons.OfType<ChatCommands.Main>().FirstOrDefault();
         BrushManager = new BrushManager();
         MapLoader = new MapLoader();
         Instance = this;
 
+        Il2CppSystem.Action _onMatchmakingStarted;
+        Il2CppSystem.Action _onJoinedParty;
         _onMatchmakingStarted = DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(NoQueuing.OnMatchmakingStarted);
         MatchmakingManager.add_OnStartMatchmaking(_onMatchmakingStarted);
         _onJoinedParty = DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(NoQueuing.OnJoinedParty);
         MatchmakingPartyManager.add_OnJoinPartyLobby(_onJoinedParty);
+
+        CreateFoldersIfNeeded();
+
 
         if (chatCommands == null)
         {
@@ -48,8 +51,6 @@ public class Main : MelonMod
         chatCommands.RegisterCommand("save", new Save());
         chatCommands.RegisterCommand("load", new Load());
         chatCommands.RegisterCommand("Warp", new Warp());
-        Directory.CreateDirectory(warpsPath);
-
     }
 
     public override void OnUpdate()

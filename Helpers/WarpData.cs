@@ -4,12 +4,6 @@ using UnityEngine;
 
 namespace CreativeMode.Helpers;
 
-public class WarpList
-{
-    [JsonProperty("warps")]
-    public WarpData[] Warps { get; set; }
-}
-
 public class WarpData
 {
     [JsonProperty("name")]

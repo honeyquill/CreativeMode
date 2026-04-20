@@ -51,11 +51,11 @@ namespace CreativeMode.Helpers
                     break;
                 default:
                     break;
-            }
+            } 
 
             return mat;
         }
-
+        
         // Returns a material, falling back to the fallback when path is missing or invalid.
         private static Material GetOrCreateMaterial(string path, Vector2 scale, int side)
         {
