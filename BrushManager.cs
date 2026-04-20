@@ -35,9 +35,12 @@ public class BrushManager
 
     public static System.Collections.Generic.Dictionary<string, System.Action<Vector3,string>> SpecialBlocks = new System.Collections.Generic.Dictionary<string, System.Action<Vector3, string>>()
     {
+        //"sticky_piston.png", "piston.png"
         { "dark_oak_button.png", (pos, Properties) => ChangeSpawn(pos,Properties,(TeamType)2)},
         { "oak_button.png", (pos, Properties) => ChangeSpawn(pos,Properties,0)},
-        { "snow.png", (pos, Properties) => SetBunny(pos, Properties) }
+        { "snow.png", (pos, Properties) => SetBunny(pos, Properties) },
+        { "sticky_piston.png", (pos,Properties) => SpawnGoal(pos,Properties,TeamType.Red) },
+        { "piston.png", (pos,Properties) => SpawnGoal(pos,Properties,TeamType.Blue) }
     };
 
     public void BrushOnUpdate()

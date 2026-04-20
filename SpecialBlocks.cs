@@ -1,4 +1,5 @@
 ﻿using Il2Cpp;
+using Il2CppTMPro;
 using MelonLoader;
 using System;
 using System.Collections.Generic;
@@ -15,12 +16,7 @@ namespace CreativeMode.SpecialBlocks
     {
         public static void ChangeSpawn(Vector3 pos,string properties, TeamType team)
         {
-            Regex regex = new Regex(@"'facing': (.*)}");
-            var match = regex.Match(properties);
-            string Dir = "";
-            if (match.Success) Dir = match.Groups[1].Value;
-
-            Quaternion LookDir = CardinalToQuaternion(Dir);
+            Quaternion LookDir = PropertiesToQuaternium(properties); 
 
             var MapInitializer = UnityEngine.Object.FindObjectsOfType<Il2Cpp.MapInitializer>()[0];
             MapInitializer.SpawnPositions[team].spawnTransform.position = pos;
@@ -28,10 +24,15 @@ namespace CreativeMode.SpecialBlocks
             MelonLogger.Msg("Spawned red block at: " + pos);
         }
 
-        public static Quaternion CardinalToQuaternion(string Cardinal)
+        public static Quaternion PropertiesToQuaternium(string properties)
         {
+            Regex regex = new Regex(@"'facing': (.*?)[},]");
+            var match = regex.Match(properties);
+            string Dir = "";
+            if (match.Success) Dir = match.Groups[1].Value;
+
             Vector3 direction = Vector3.forward; // default
-            switch (Cardinal)
+            switch (Dir)
             {
                 case "north": direction = Vector3.right; break;
                 case "south": direction = Vector3.left; break;
@@ -89,6 +90,23 @@ namespace CreativeMode.SpecialBlocks
 
                 norm = (track.GetChild(4).position - track.GetChild(3).position).normalized;
                 track.GetChild(5).position = track.GetChild(4).position + norm * spacing * 10f + Vector3.down * 100f;
+            }
+        }
+
+        public static void SpawnGoal(Vector3 pos, string Properties, TeamType Team)
+        {
+            return; //ToDo: Fix this code when UnityExplorer works
+
+            foreach (var Goal in UnityEngine.Object.FindObjectsOfType<Goal>()) 
+            {
+                if (Goal.OwnerTeam == Team) 
+                {
+                    Quaternion Direction = PropertiesToQuaternium(Properties);
+
+                    Goal.transform.position = pos;
+                    Goal.transform.rotation = Direction;
+                    Helpers.BeetleUtils.SendChatMessage($"uhhh {Team}");
+                }
             }
         }
     }
