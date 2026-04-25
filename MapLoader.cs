@@ -65,10 +65,12 @@ public class MapLoader
         float.TryParse(parts[2], out float z);
         Vector3 pos = new(x*5, y*5, z*5);
 
-        foreach (var key in s_materialCache.Keys.Where(k => s_materialCache[k] == null).ToList()) s_materialCache.Remove(key);
+        s_meshCache.Clear();
+        s_materialCache.Clear();
+
         MelonLogger.Msg($"Loading map: {Mapname} at position X: {pos.x}, Y: {pos.y}, Z: {pos.z}");
 
-        string filePath = MapFolder() + Mapname + ".json";
+        string filePath = Path.Combine(MapFolder(), Mapname + ".json");
         if (!File.Exists(filePath))
         {
             SendChatMessage("There was a error loading the map check console..");

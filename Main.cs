@@ -23,20 +23,21 @@ public class Main : MelonMod
 
     public override void OnInitializeMelon()
     {
-        var chatCommands = MelonMod.RegisteredMelons.OfType<ChatCommands.Main>().FirstOrDefault();
+        var chatCommands = RegisteredMelons.OfType<ChatCommands.Main>().FirstOrDefault();
         MapLoader = new MapLoader();
         Instance = this;
 
         //Stop Cheating by preventing matchmaking and party joining
         Il2CppSystem.Action? _onMatchmakingStarted;
-        Il2CppSystem.Action? _onJoinedParty;
         _onMatchmakingStarted = DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(NoQueuing.OnMatchmakingStarted);
         MatchmakingManager.add_OnStartMatchmaking(_onMatchmakingStarted);
+
+        Il2CppSystem.Action? _onJoinedParty;
         _onJoinedParty = DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(NoQueuing.OnJoinedParty);
         MatchmakingPartyManager.add_OnJoinPartyLobby(_onJoinedParty);
 
-        CreateFoldersIfNeeded();
 
+        CreateFoldersIfNeeded();
 
         if (chatCommands == null)
         {

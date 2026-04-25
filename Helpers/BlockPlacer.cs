@@ -18,7 +18,7 @@ namespace CreativeMode.Helpers
         public static readonly Dictionary<string, Material> s_materialCache = new();
         private static readonly Stack<GameObject> s_pool = new();
         private static readonly List<GameObject> s_active = new();
-        private static readonly Dictionary<int, Mesh> s_meshCache = new();
+        public static readonly Dictionary<int, Mesh> s_meshCache = new();
 
         public static Material LoadTexture(string path,Vector2 scale,int side)
         {
