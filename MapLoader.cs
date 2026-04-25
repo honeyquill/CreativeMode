@@ -59,58 +59,65 @@ public class MapLoader
 
     public static void LoadMapFromFile(string Mapname, string Position)
     {
-        string[] parts = Position.Split(',');
-        float.TryParse(parts[0], out float x);
-        float.TryParse(parts[1], out float y);
-        float.TryParse(parts[2], out float z);
-        Vector3 pos = new(x*5, y*5, z*5);
-
-        s_meshCache.Clear();
-        s_materialCache.Clear();
-
-        MelonLogger.Msg($"Loading map: {Mapname} at position X: {pos.x}, Y: {pos.y}, Z: {pos.z}");
-
-        string filePath = Path.Combine(MapFolder(), Mapname + ".json");
-        if (!File.Exists(filePath))
+        try
         {
-            SendChatMessage("There was a error loading the map check console..");
-            MelonLogger.Error("Map file not found: " + filePath);
-            return;
-        }
+            string[] parts = Position.Split(',');
+            float.TryParse(parts[0], out float x);
+            float.TryParse(parts[1], out float y);
+            float.TryParse(parts[2], out float z);
+            Vector3 pos = new(x * 5, y * 5, z * 5);
 
-        string json = File.ReadAllText(filePath);
-        // Deserialize as object with two arrays
-        var data = JsonConvert.DeserializeObject<MapData>(json);
-        if (data != null)
-        {
-            BlockPositions = data.positions;
-            BlockPaths = data.paths;
-            Faces = data.Faces;
-            Properties = data.Properties;
-        }
+            s_meshCache.Clear();
+            s_materialCache.Clear();
 
-        for (int i = 0; i < BlockPositions.Length; i++)
-        {
-            Vector3 Pos = new Vector3(
-                BlockPositions[i][0] * 5 + pos.x,
-                BlockPositions[i][1] * 5 + pos.y,
-                BlockPositions[i][2] * 5 + pos.z);
+            MelonLogger.Msg($"Loading map: {Mapname} at position X: {pos.x}, Y: {pos.y}, Z: {pos.z}");
 
-            if (SpecialBlocks.TryGetValue(BlockPaths[i], out System.Action<Vector3, string> action))
+            string filePath = Path.Combine(MapFolder(), Mapname + ".json");
+            if (!File.Exists(filePath))
             {
-                action(Pos, Properties[i]);
-                continue;
+                SendChatMessage("There was a error loading the map check console..");
+                MelonLogger.Error("Map file not found: " + filePath);
+                return;
             }
 
-            PlaceBlock(BlockPaths[i], 5, Pos, Faces[i][0], Faces[i][1], Faces[i][2], Properties[i]);
-            MelonLogger.Msg($"X: {BlockPositions[i][0]}, Y: {BlockPositions[i][1]}, Z: {BlockPositions[i][2]}, Block: {BlockPaths[i]}");
+            string json = File.ReadAllText(filePath);
+            // Deserialize as object with two arrays
+            var data = JsonConvert.DeserializeObject<MapData>(json);
+            if (data != null)
+            {
+                BlockPositions = data.positions;
+                BlockPaths = data.paths;
+                Faces = data.Faces;
+                Properties = data.Properties;
+            }
+;
+            for (int i = 0; i < BlockPositions.Length; i++)
+            {
+                Vector3 Pos = new Vector3(
+                    BlockPositions[i][0] * 5 + pos.x,
+                    BlockPositions[i][1] * 5 + pos.y,
+                    BlockPositions[i][2] * 5 + pos.z);
+
+                if (SpecialBlocks.TryGetValue(BlockPaths[i], out System.Action<Vector3, string> action))
+                {
+                    action(Pos, Properties[i]);
+                    continue;
+                }
+
+                PlaceBlock(BlockPaths[i], 5, Pos, Faces[i][0], Faces[i][1], Faces[i][2], Properties[i]);
+                MelonLogger.Msg($"X: {Pos}, Block: {BlockPaths[i]}");
+            }
+            if (IsHost())
+                respawnall();
+            OffsetBunny();
         }
-        if(IsHost())
-            respawnall();
-        OffsetBunny();
+        catch (System.Exception ex)
+        {
+            MelonLogger.Error("Error during map load: " + ex.Message);
+            SendChatMessage("There was an error loading the map, check console.");
+
+        }
     }
-
-
 
     // Helper class for JSON serialization
     private class MapData
