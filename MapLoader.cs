@@ -105,7 +105,8 @@ public class MapLoader
             PlaceBlock(BlockPaths[i], 5, Pos, Faces[i][0], Faces[i][1], Faces[i][2], Properties[i]);
             MelonLogger.Msg($"X: {BlockPositions[i][0]}, Y: {BlockPositions[i][1]}, Z: {BlockPositions[i][2]}, Block: {BlockPaths[i]}");
         }
-        respawnall();
+        if(IsHost())
+            respawnall();
         OffsetBunny();
     }
 
