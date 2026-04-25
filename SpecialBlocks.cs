@@ -16,35 +16,38 @@ namespace CreativeMode.SpecialBlocks
     {
         public static void ChangeSpawn(Vector3 pos,string properties, TeamType team)
         {
-            Quaternion LookDir = PropertiesToQuaternium(properties); 
+            Quaternion LookDir = PropertiesToQuaternium(properties);
+            if (team == 0)
+                LookDir = LookDir * Quaternion.Euler(0, 90, 0);
+            else
+                LookDir = LookDir * Quaternion.Euler(0, 270, 0); //Baindaid Fix for a baindaid game 😼
 
             var MapInitializer = UnityEngine.Object.FindObjectsOfType<Il2Cpp.MapInitializer>()[0];
             MapInitializer.SpawnPositions[team].spawnTransform.position = pos;
             MapInitializer.SpawnPositions[team].spawnTransform.rotation = LookDir;
             MelonLogger.Msg("Spawned red block at: " + pos);
         }
-
+         
         public static Quaternion PropertiesToQuaternium(string properties)
         {
             Regex regex = new Regex(@"'facing': (.*?)[},]");
             var match = regex.Match(properties);
             string Dir = "";
             if (match.Success) Dir = match.Groups[1].Value;
-
-            Vector3 direction = Vector3.forward; // default
+             
+            float yAngle = 0f; // default
             switch (Dir)
             {
-                case "north": direction = Vector3.right; break;
-                case "south": direction = Vector3.left; break;
-                case "east": direction = Vector3.forward; break;
-                case "west": direction = Vector3.back; break;
+                case "north": yAngle = 0f; break;
+                case "east": yAngle = 90f; break;
+                case "south": yAngle = 180f; break;
+                case "west": yAngle = 270f; break;
             }
-
-            return Quaternion.LookRotation(direction);
+            return Quaternion.Euler(0f, yAngle, 0f);
         }
-
+         
         public static void SetBunny(Vector3 pos, string properties)
-        {
+        {   
             Regex regex = new Regex(@"'layers'\s*:\s*(\d+)");
             var bunnyspawner = UnityEngine.Object.FindObjectOfType<BunnySpawner>();
             var path = regex.Match(properties);
@@ -95,17 +98,16 @@ namespace CreativeMode.SpecialBlocks
 
         public static void SpawnGoal(Vector3 pos, string Properties, TeamType Team)
         {
-            return; //ToDo: Fix this code when UnityExplorer works
-
-            foreach (var Goal in UnityEngine.Object.FindObjectsOfType<Goal>()) 
+            foreach (var Goal in UnityEngine.Object.FindObjectsOfType<Goal>())
             {
-                if (Goal.OwnerTeam == Team) 
+                if (Goal.OwnerTeam == Team)
                 {
-                    Quaternion Direction = PropertiesToQuaternium(Properties);
+                    Quaternion LookDir = PropertiesToQuaternium(Properties);
+                    LookDir = LookDir * Quaternion.Euler(0, 180, 0);
 
-                    Goal.transform.position = pos;
-                    Goal.transform.rotation = Direction;
-                    Helpers.BeetleUtils.SendChatMessage($"uhhh {Team}");
+                    Vector3 backward = LookDir * Vector3.back * 2.5f;
+                    Goal.transform.position = pos + Vector3.up * 20f + backward;
+                    Goal.transform.rotation = LookDir;
                 }
             }
         }

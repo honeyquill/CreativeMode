@@ -15,12 +15,10 @@ namespace CreativeMode.Helpers
     internal class BlockPlacer
     {
         // Caches and pool to avoid expensive allocations at spawn time
-        private static readonly Dictionary<string, Material> s_materialCache = new();
+        public static readonly Dictionary<string, Material> s_materialCache = new();
         private static readonly Stack<GameObject> s_pool = new();
         private static readonly List<GameObject> s_active = new();
         private static readonly Dictionary<int, Mesh> s_meshCache = new();
-        private static Mesh s_sharedCubeMesh;
-        private static Material s_fallbackMaterial;
 
         public static Material LoadTexture(string path,Vector2 scale,int side)
         {
@@ -230,7 +228,7 @@ namespace CreativeMode.Helpers
 
 
 
-        public static void PlaceBlock(string path, float size, Vector3 pos, bool renderSides = true, bool renderTop = true, bool renderBottom = true, string properties = "", bool? grid = true)
+        public static void PlaceBlock(string path, float size, Vector3 pos, bool renderSides = true, bool renderTop = true, bool renderBottom = true, string properties = "")
         {
             bool slab;
             string realpath = path.Replace("_slab", "");

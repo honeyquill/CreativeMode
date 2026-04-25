@@ -18,18 +18,18 @@ namespace CreativeMode;
 public class Main : MelonMod
 {
     public static Main? Instance { get; private set; }
-    public BrushManager? BrushManager;
+    public MapLoader? BrushManager;
     public MapLoader? MapLoader;
 
     public override void OnInitializeMelon()
     {
         var chatCommands = MelonMod.RegisteredMelons.OfType<ChatCommands.Main>().FirstOrDefault();
-        BrushManager = new BrushManager();
         MapLoader = new MapLoader();
         Instance = this;
 
-        Il2CppSystem.Action _onMatchmakingStarted;
-        Il2CppSystem.Action _onJoinedParty;
+        //Stop Cheating by preventing matchmaking and party joining
+        Il2CppSystem.Action? _onMatchmakingStarted;
+        Il2CppSystem.Action? _onJoinedParty;
         _onMatchmakingStarted = DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(NoQueuing.OnMatchmakingStarted);
         MatchmakingManager.add_OnStartMatchmaking(_onMatchmakingStarted);
         _onJoinedParty = DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(NoQueuing.OnJoinedParty);
@@ -44,19 +44,12 @@ public class Main : MelonMod
             return;
         }
         
-        chatCommands.RegisterCommand("Ping", new Ping());
-        chatCommands.RegisterCommand("brush", new Brush());
         chatCommands.RegisterCommand("Costume", new Costume());
-        chatCommands.RegisterCommand("grav", new DisableGravity());
-        chatCommands.RegisterCommand("save", new Save());
-        chatCommands.RegisterCommand("load", new Load());
         chatCommands.RegisterCommand("Warp", new Warp());
     }
 
     public override void OnUpdate()
     {
         MapLoader?.OnUpdate();
-        BrushManager?.BrushOnUpdate();
     }
-
 }

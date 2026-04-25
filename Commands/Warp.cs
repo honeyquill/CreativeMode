@@ -165,5 +165,12 @@ public class Warp : ChatCommand
 
         return targetWarp;
     }
+    public class WarpData
+    {
+        [JsonProperty("name")]
+        public string Name { get; set; }
 
+        [JsonProperty("position")]
+        public float[] Position { get; set; }
+    }
 }
