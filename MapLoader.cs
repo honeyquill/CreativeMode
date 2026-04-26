@@ -24,14 +24,14 @@ public class MapLoader
     bool wasCommenced = false;
     MatchDataManager? matchDataManager;
 
-    public static System.Collections.Generic.Dictionary<string, System.Action<Vector3,string>> SpecialBlocks = new System.Collections.Generic.Dictionary<string, System.Action<Vector3, string>>()
+    public static System.Collections.Generic.Dictionary<string, System.Action<BlockData>> SpecialBlocks = new System.Collections.Generic.Dictionary<string, System.Action<BlockData>>()
     {
         //"sticky_piston.png", "piston.png"
-        { "dark_oak_button.png", (pos, Properties) => ChangeSpawn(pos,Properties,(TeamType)2)},
-        { "oak_button.png", (pos, Properties) => ChangeSpawn(pos,Properties,0)},
-        { "snow.png", (pos, Properties) => SetBunny(pos, Properties) },
-        { "sticky_piston.png", (pos,Properties) => SpawnGoal(pos,Properties,TeamType.Red) },
-        { "piston.png", (pos,Properties) => SpawnGoal(pos,Properties,TeamType.Blue) }
+        { "dark_oak_button.png", (BlockData) => ChangeSpawn(BlockData, (TeamType)2)},
+        { "oak_button.png", (BlockData) => ChangeSpawn(BlockData, 0)},
+        { "snow.png", (BlockData) => SetBunny(BlockData) },
+        { "sticky_piston.png", (BlockData) => SpawnGoal(BlockData, TeamType.Red) },
+        { "piston.png", (BlockData) => SpawnGoal(BlockData, TeamType.Blue) }
     };
 
 
@@ -65,12 +65,12 @@ public class MapLoader
             float.TryParse(parts[0], out float x);
             float.TryParse(parts[1], out float y);
             float.TryParse(parts[2], out float z);
-            Vector3 pos = new(x * 5, y * 5, z * 5);
+            Vector3 Offset = new(x * 5, y * 5, z * 5);
 
             s_meshCache.Clear();
             s_materialCache.Clear();
 
-            MelonLogger.Msg($"Loading map: {Mapname} at position X: {pos.x}, Y: {pos.y}, Z: {pos.z}");
+            MelonLogger.Msg($"Loading map: {Mapname} at position X: {Offset.x}, Y: {Offset.y}, Z: {Offset.z}");
 
             string filePath = Path.Combine(MapFolder(), Mapname + ".json");
             if (!File.Exists(filePath))
@@ -89,20 +89,29 @@ public class MapLoader
 
             foreach (BlockData block in data.blocks)
             {
-                Vector3 Pos = new Vector3(
-                    block.position[0] * 5 + pos.x, //X
-                    block.position[1] * 5 + pos.y, //Y
-                    block.position[2] * 5 + pos.z); //Z
 
-                if (SpecialBlocks.TryGetValue(block.path, out System.Action<Vector3, string> action))
+                block.position[0] = block.position[0]*5+ Offset.x;
+                block.position[1] = block.position[1]*5+ Offset.y;
+                block.position[2] = block.position[2]*5+ Offset.z;
+
+                if (SpecialBlocks.TryGetValue(block.path, out System.Action<BlockData> action))
                 {
-                    action(Pos, block.properties);
+                    action(block);
                     continue;
                 }
 
-                PlaceBlock(block.path, 5, Pos, block.faces, block.properties);
-                MelonLogger.Msg($"X: {Pos}, Block: {block.path}");
+                PlaceBlock(block);
+                MelonLogger.Msg($"Pos: {block.position}, Block: {block.path}");
             }
+
+            foreach (ChestNBT chest in data.tile_entities)
+            {
+                chest.x = chest.x * 5 + Offset.x;
+                chest.y = chest.y * 5 + Offset.y;
+                chest.z = chest.z * 5 + Offset.z;
+                //SendChatMessage($"Spawning chest at X: {chest.x}, Y: {chest.y}, Z: {chest.z}, item 1 inside is {chest.items[0].itemId}");
+            }
+
             if (IsHost())
                 respawnall();
             OffsetBunny();
@@ -119,12 +128,26 @@ public class MapLoader
     private class MapData
     {
         public BlockData[] blocks = new BlockData[0];
+        public ChestNBT[] tile_entities = new ChestNBT[0];
     }
-    private class BlockData
+    public class BlockData
     {
         public string path = "";
         public float[] position = new float[3];
         public bool[] faces = new bool[3];
         public string properties = "";
+    }
+    public class ChestNBT
+    {
+        public float x, y, z;
+        public Item[] items;
+    }
+
+    public class Item
+    {
+        public int slot;
+        public string itemId;
+        public int count;
+        public string name;
     }
 }

@@ -9,7 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
-
+using static MapLoader;
+using static CreativeMode.SpecialBlocks.SpecialBlocks;
 namespace CreativeMode.Helpers
 {
     internal class BlockPlacer
@@ -227,13 +228,16 @@ namespace CreativeMode.Helpers
         }
 
 
-
-        public static void PlaceBlock(string path, float size, Vector3 pos, bool[] Sides, string properties = "")
+        //string path, float size, Vector3 pos, bool[] Sides, string properties = ""
+        public static void PlaceBlock(BlockData block)
         {
+            float size = 5f;
+
             bool slab;
-            string realpath = path.Replace("_slab", "");
-            if (realpath != path) slab = true; else slab = false;
-            if(properties.Contains("double")) slab = false;
+            string realpath = block.path.Replace("_slab", "");
+            if (realpath != block.path) slab = true; else slab = false;
+            if(block.properties.Contains("double")) slab = false;
+
             Material sideMat;
             if (slab)
             {
@@ -248,6 +252,8 @@ namespace CreativeMode.Helpers
             Material topMat = GetMaterialByType(realpath, new Vector2(1, 1f), 1);
             Material bottomMat = GetMaterialByType(realpath, new Vector2(1, 1f), 2);
 
+            Vector3 pos = BlockDataToVector3(block);
+
             // Snap the position to the nearest grid point
             Vector3 gridCenter = Grid(pos, size);
 
@@ -258,9 +264,9 @@ namespace CreativeMode.Helpers
 
             // Determine mesh mask and materials order. Submesh order is: sides (if present), top (if present), bottom (if present)
             int mask = 0;
-            if (Sides[0]) mask |= 1; // sides
-            if (Sides[1]) mask |= 2; // top
-            if (Sides[2]) mask |= 4; // bottom
+            if (block.faces[0]) mask |= 1; // sides
+            if (block.faces[1]) mask |= 2; // top
+            if (block.faces[2]) mask |= 4; // bottom
 
             // Ensure at least one face is rendered; if none are requested, render sides as fallback for visibility/perf predictability
             if (mask == 0) mask = 1;
@@ -283,7 +289,7 @@ namespace CreativeMode.Helpers
 
             // Set transform
             cube.transform.position = (gridP1 + gridP2) / 2f;
-            if (slab && properties.Contains("bottom")) cube.transform.position += new Vector3(0, -size * 0.5f, 0); // adjust for slab height
+            if (slab && block.properties.Contains("bottom")) cube.transform.position += new Vector3(0, -size * 0.5f, 0); // adjust for slab height
             cube.transform.rotation = Quaternion.identity;
             if (slab)
             {
