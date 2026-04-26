@@ -1,63 +1,60 @@
 ﻿using ChatCommands;
-using System;
 using Il2Cpp;
 using MelonLoader;
+using System;
+using System.Diagnostics.Eventing.Reader;
+using System.Linq;
 using UnityEngine;
 using static CreativeMode.Helpers.BeetleUtils;
-    
+
 namespace CreativeMode.Commands;
 
 public class Costume : ChatCommand
 {
     private static BunnyPathJumper costume;
-    private static BeetleActor localBeetle = GetLocalBeetle();
+    private static bool CostumeToggle = false;
     
     public Costume()
-        : base("Costume", "Change your player model", ExecuteCostume, 2)
+        : base("Costume", "Change your player model", ExecuteCostume, 0,CheckIfParentIsDead)
     {
     }
 
     private static void ExecuteCostume(string[] args, string playername)
     {
-        if (args.Length != 2)
-        {
-            SendChatMessage("2 arg are required. on/off, id");
-            return;
-        }
-        
         var bunnyPrefab = UnityEngine.Object.FindAnyObjectByType<BunnySpawner>().bunnyPrefab;
-        var arg1 = (ulong)int.Parse(args[1]);
-        
-        switch (args[0])
+        var Actor = GetActorByName(playername);
+        CostumeToggle = !CostumeToggle;
+
+        if (CostumeToggle)
         {
-            case "on":
-                costume = UnityEngine.Object.Instantiate(bunnyPrefab, GetActorByID(arg1).transform);
-                Vector3 euler = costume.transform.localEulerAngles;
-                euler.x = 0;
-                euler.z = 0;
-                euler.y += 180;
-                costume.transform.localEulerAngles = euler;
-                costume.transform.localScale = new Vector3(5f, 5f, 5f);
-                Vector3 pos = costume.transform.localPosition;
-                pos.y = -0.6f;
-                costume.transform.localPosition = pos;
-                
-                GetActorByID(arg1).transform.Find("Model").Find("Beetle_Cyborg_V0").Find("GEO").gameObject.SetActive(false);
-                GetActorByID(arg1).transform.Find("Model").Find("Beetle_Cyborg_V0").Find("Root").gameObject.SetActive(false);
-                break;
-            case "off":
-                for (int i = 0; i < GetActorByID(arg1).transform.childCount; i++)
-                {
-                    if (GetActorByID(arg1).transform.GetChild(i).name == "Bunny(Clone)")
-                    {
-                        UnityEngine.Object.Destroy(GetActorByID(arg1).transform.GetChild(i).gameObject);
-                    }
-                }
-                
-                break;
-            case "default":
-                SendChatMessage("wrong arg. on/off, id");
-                break;
+            costume = UnityEngine.Object.Instantiate(bunnyPrefab, Actor.transform);
+
+            costume.transform.localRotation = Quaternion.Euler(0, costume.transform.localEulerAngles.y + 180, 0);
+            costume.transform.localScale = Vector3.one * 5f; //Shrinks the bunny down to about player size
+            costume.transform.localPosition += Vector3.down * 0.6f;
+
+            Actor.transform.Find("Model").gameObject.SetActive(false); // hide original model
         }
+        else
+        {
+            for (int i = 0; i < Actor.transform.childCount; i++)
+            {
+                Actor.transform.Find("Model").gameObject.SetActive(true);
+                // Cast explicitly through Il2CppObjectBase
+                var child = Actor.transform.GetChild(i);
+                if (child.name == "Bunny(Clone)")
+                    UnityEngine.Object.Destroy(child.gameObject);
+            }
+        }
+    }
+    private static void CheckIfParentIsDead()
+    {
+        if (costume == null) return;
+        if (costume.transform.parent == null)
+        {
+            UnityEngine.Object.Destroy(costume.gameObject);
+            CostumeToggle = false;
+        }
+
     }
 }
