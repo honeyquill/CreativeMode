@@ -228,7 +228,7 @@ namespace CreativeMode.Helpers
 
 
 
-        public static void PlaceBlock(string path, float size, Vector3 pos, bool renderSides = true, bool renderTop = true, bool renderBottom = true, string properties = "")
+        public static void PlaceBlock(string path, float size, Vector3 pos, bool[] Sides, string properties = "")
         {
             bool slab;
             string realpath = path.Replace("_slab", "");
@@ -258,9 +258,9 @@ namespace CreativeMode.Helpers
 
             // Determine mesh mask and materials order. Submesh order is: sides (if present), top (if present), bottom (if present)
             int mask = 0;
-            if (renderSides) mask |= 1;
-            if (renderTop) mask |= 2;
-            if (renderBottom) mask |= 4;
+            if (Sides[0]) mask |= 1; // sides
+            if (Sides[1]) mask |= 2; // top
+            if (Sides[2]) mask |= 4; // bottom
 
             // Ensure at least one face is rendered; if none are requested, render sides as fallback for visibility/perf predictability
             if (mask == 0) mask = 1;

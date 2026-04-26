@@ -116,6 +116,7 @@ public static class BeetleUtils
 
     public static void ShowPopUp(string text, PopupManager.Position Pos, float Duration, Color? color = default, float? fadeOutTime = 0f)
     {
+        if(color == default) color = Color.white;
         var PopUpColor = new Il2CppSystem.Nullable<Color>((Color)color);
         var PopUpFadeTime = new Il2CppSystem.Nullable<float>((float)fadeOutTime);
         PopupManager.Instance.ShowSimpleTextPopup(text, Pos, Duration, PopUpColor, PopUpFadeTime);

@@ -1,8 +1,9 @@
-﻿using System;
-using static CreativeMode.Helpers.BeetleUtils;
+﻿using Il2Cpp;
+using MelonLoader;
+using System;
+using System.Diagnostics;
 using System.IO;
-using Il2Cpp;
-
+using static CreativeMode.Helpers.BeetleUtils;
 namespace CreativeMode
 {
     internal class ManageFiles
@@ -12,16 +13,20 @@ namespace CreativeMode
         {
             string modfolder = ModFolder();
 
-
-
             foreach (string folder in folders)
             {
                 string dir = Path.Combine(modfolder, folder);
 
                 if (!Directory.Exists(dir))
                 {
+                    if (folder == folders[0])
+                    {
+                        string YoutubeLink = "https://Google.com"; //when the tut gets uploaded add the link here
+                        ShowPopUp($"Created Blocks Folder Please go here to download the needed blocks: {YoutubeLink}", PopupManager.Position.Top, 10f);
+                        Process.Start(new ProcessStartInfo(YoutubeLink) { UseShellExecute = true }); //Open the link in the user's default browser
+                    }
                     Directory.CreateDirectory(dir);
-                    Console.WriteLine($"Created: {dir}");
+
                 }
             }
         }

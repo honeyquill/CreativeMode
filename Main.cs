@@ -37,8 +37,6 @@ public class Main : MelonMod
         MatchmakingPartyManager.add_OnJoinPartyLobby(_onJoinedParty);
 
 
-        CreateFoldersIfNeeded();
-
         if (chatCommands == null)
         {
             MelonLogger.Warning("ChatCommands could not be found.");
@@ -49,6 +47,14 @@ public class Main : MelonMod
         chatCommands.RegisterCommand("Warp", new Warp());
     }
 
+    public override void OnSceneWasLoaded(int buildIndex, string sceneName)
+    {
+        if (sceneName == "MainMenu")
+        {
+            //Only make folder when the game loads so you can display a message if the folders are missing and not just create them without the user knowing.
+            CreateFoldersIfNeeded();
+        }
+    }
     public override void OnUpdate()
     {
         MapLoader?.OnUpdate();

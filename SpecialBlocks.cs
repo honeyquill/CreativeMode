@@ -17,10 +17,6 @@ namespace CreativeMode.SpecialBlocks
         public static void ChangeSpawn(Vector3 pos,string properties, TeamType team)
         {
             Quaternion LookDir = PropertiesToQuaternium(properties);
-            if (team == 0)
-                LookDir = LookDir * Quaternion.Euler(0, 90, 0);
-            else
-                LookDir = LookDir * Quaternion.Euler(0, 270, 0); //Baindaid Fix for a baindaid game 😼
 
             var MapInitializer = UnityEngine.Object.FindObjectsOfType<Il2Cpp.MapInitializer>()[0];
             MapInitializer.SpawnPositions[team].spawnTransform.position = pos;
@@ -38,10 +34,10 @@ namespace CreativeMode.SpecialBlocks
             float yAngle = 0f; // default
             switch (Dir)
             {
-                case "north": yAngle = 0f; break;
-                case "east": yAngle = 90f; break;
-                case "south": yAngle = 180f; break;
-                case "west": yAngle = 270f; break;
+                case "north": yAngle = 180f; break;
+                case "east": yAngle = 270f; break;
+                case "south": yAngle = 0f; break;
+                case "west": yAngle = 90f; break;
             }
             return Quaternion.Euler(0f, yAngle, 0f);
         }
@@ -103,11 +99,11 @@ namespace CreativeMode.SpecialBlocks
                 if (Goal.OwnerTeam == Team)
                 {
                     Quaternion LookDir = PropertiesToQuaternium(Properties);
-                    LookDir = LookDir * Quaternion.Euler(0, 180, 0);
 
-                    Vector3 backward = LookDir * Vector3.back * 2.5f;
+                    Vector3 backward = LookDir * Vector3.back * 2f;
                     Goal.transform.position = pos + Vector3.up * 20f + backward;
                     Goal.transform.rotation = LookDir;
+                    Goal.transform.localScale = Goal.transform.localScale * 1.3f;
                 }
             }
         }

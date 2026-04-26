@@ -82,30 +82,23 @@ public class MapLoader
 
             string json = File.ReadAllText(filePath);
             // Deserialize as object with two arrays
-            var data = JsonConvert.DeserializeObject<MapData>(json);
-            if (data != null)
-            {
-                BlockPositions = data.positions;
-                BlockPaths = data.paths;
-                Faces = data.Faces;
-                Properties = data.Properties;
-            }
-;
-            for (int i = 0; i < BlockPositions.Length; i++)
+            MapData data = JsonConvert.DeserializeObject<MapData>(json);
+
+            foreach (BlockData block in data.blocks)
             {
                 Vector3 Pos = new Vector3(
-                    BlockPositions[i][0] * 5 + pos.x,
-                    BlockPositions[i][1] * 5 + pos.y,
-                    BlockPositions[i][2] * 5 + pos.z);
+                    block.position[0] * 5 + pos.x, //X
+                    block.position[1] * 5 + pos.y, //Y
+                    block.position[2] * 5 + pos.z); //Z
 
-                if (SpecialBlocks.TryGetValue(BlockPaths[i], out System.Action<Vector3, string> action))
+                if (SpecialBlocks.TryGetValue(block.path, out System.Action<Vector3, string> action))
                 {
-                    action(Pos, Properties[i]);
+                    action(Pos, block.properties);
                     continue;
                 }
 
-                PlaceBlock(BlockPaths[i], 5, Pos, Faces[i][0], Faces[i][1], Faces[i][2], Properties[i]);
-                MelonLogger.Msg($"X: {Pos}, Block: {BlockPaths[i]}");
+                PlaceBlock(block.path, 5, Pos, block.faces, block.properties);
+                MelonLogger.Msg($"X: {Pos}, Block: {block.path}");
             }
             if (IsHost())
                 respawnall();
@@ -122,9 +115,13 @@ public class MapLoader
     // Helper class for JSON serialization
     private class MapData
     {
-        public float[][] positions = new float[0][];
-        public string[] paths = new string[0];
-        public bool[][] Faces = new bool[0][];
-        public string[] Properties = new string[0];
+        public BlockData[] blocks = new BlockData[0];
+    }
+    private class BlockData
+    {
+        public string path = "";
+        public float[] position = new float[3];
+        public bool[] faces = new bool[3];
+        public string properties = "";
     }
 }
