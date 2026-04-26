@@ -82,7 +82,10 @@ public class MapLoader
 
             string json = File.ReadAllText(filePath);
             // Deserialize as object with two arrays
-            MapData data = JsonConvert.DeserializeObject<MapData>(json);
+            MapData? data = JsonConvert.DeserializeObject<MapData>(json);
+
+            if (data == null)
+                throw new System.Exception("Failed to deserialize map data because data was null");
 
             foreach (BlockData block in data.blocks)
             {
