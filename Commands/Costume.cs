@@ -39,7 +39,7 @@ public class Costume : ChatCommand
         {
             for (int i = 0; i < Actor.transform.childCount; i++)
             {
-                Actor.transform.Find("Model").gameObject.SetActive(true);
+                Actor.transform.Find("Model").gameObject.SetActive(true); // show original model
                 // Cast explicitly through Il2CppObjectBase
                 var child = Actor.transform.GetChild(i);
                 if (child.name == "Bunny(Clone)")
