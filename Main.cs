@@ -34,7 +34,7 @@ public class Main : MelonMod
 
         Il2CppSystem.Action? _onJoinedParty;
         _onJoinedParty = DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(NoQueuing.OnJoinedParty);
-        MatchmakingPartyManager.add_OnJoinPartyLobby(_onJoinedParty);
+        MatchmakingPartyManager.add_OnJoinPartyLobby(_onJoinedParty); 
 
 
         if (chatCommands == null)

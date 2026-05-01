@@ -1,12 +1,14 @@
 ﻿using Il2Cpp;
 using Il2CppTMPro;
 using MelonLoader;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Unity.Netcode;
 using UnityEngine;
 using static MapLoader;
 namespace CreativeMode.SpecialBlocks
@@ -49,11 +51,11 @@ namespace CreativeMode.SpecialBlocks
             MapInitializer.SpawnPositions[team].spawnTransform.rotation = LookDir;
             MelonLogger.Msg("Spawned red block at: " + pos);
         }
-         
 
-         
+
+
         public static void SetBunny(BlockData block)
-        {   
+        {
             Regex regex = new Regex(@"'layers'\s*:\s*(\d+)");
             var path = regex.Match(block.properties);
             Vector3 pos = BlockDataToVector3(block);
@@ -65,24 +67,24 @@ namespace CreativeMode.SpecialBlocks
             {
                 layers = int.Parse(path.Groups[1].Value);
             }
-            Vector3 offset = new Vector3(0,-5,0);
+            Vector3 offset = new Vector3(0, -5, 0);
             Vector3 Dungpos = bunnyspawner.bunnyPrefab.pooSpawnPosition.position;
             MelonLogger.Msg("Setting bunny block at: " + pos + " with layers: " + layers);
-            bunnyspawner.tracks[layers / 5].GetChild((layers - 1) % 4 + 1).position = pos+offset;
-            
+            bunnyspawner.tracks[layers / 5].GetChild((layers - 1) % 4 + 1).position = pos + offset;
+
             if ((layers - 1) % 4 + 1 == 1)
             {
                 bunnyspawner.tracks[layers / 5].GetChild(0).position = pos + Dung - new Vector3(0, Dung.y, 0);
             }
         }
 
-       public static void OffsetBunny()
-       {
+        public static void OffsetBunny()
+        {
             var bunnyspawner = UnityEngine.Object.FindObjectOfType<BunnySpawner>();
             float spacing = 12.65f; // sqrt(4²,12²) its a number that worked before
 
 
-            foreach(Transform track in bunnyspawner.tracks)
+            foreach (Transform track in bunnyspawner.tracks)
             {
                 Vector3 norm = (track.GetChild(2).position - track.GetChild(1).position).normalized;
                 track.GetChild(0).position -= norm * spacing * 10f + Vector3.up * 100f;
@@ -92,7 +94,7 @@ namespace CreativeMode.SpecialBlocks
                     Vector3 previousPos = track.GetChild(i - 1).position;
                     Vector3 currentPos = track.GetChild(i).position;
                     norm = (currentPos - previousPos);
-                    norm = norm - new Vector3(0,norm.y,0);
+                    norm = norm - new Vector3(0, norm.y, 0);
                     norm = norm.normalized;
 
                     track.GetChild(i).position = currentPos + norm * spacing;
@@ -120,6 +122,13 @@ namespace CreativeMode.SpecialBlocks
                     Goal.transform.localScale = Goal.transform.localScale * 1.3f;
                 }
             }
+        }
+
+        public static void SpawnDung(BlockData Block, int size)
+        {
+            Vector3 pos = BlockDataToVector3(Block);
+            var rpcParams = new RpcParams(); // initializes new non null rpc params
+            NetworkPrefabSpawner.Instance.SpawnDungBall_ServerRpc(pos, Vector3.zero, size, 0, rpcParams);
         }
     }
 }

@@ -15,14 +15,18 @@ public class Costume : ChatCommand
     private static bool CostumeToggle = false;
     
     public Costume()
-        : base("Costume", "Change your player model", ExecuteCostume, 0,CheckIfParentIsDead)
+        : base("Costume", "Disguises urself or other as bunny| !Costume <Name,Id> (No Input assumes Yourself)", ExecuteCostume, 1 ,CheckIfParentIsDead)
     {
     }
 
     private static void ExecuteCostume(string[] args, string playername)
     {
         var bunnyPrefab = UnityEngine.Object.FindAnyObjectByType<BunnySpawner>().bunnyPrefab;
-        var Actor = GetActorByName(playername);
+        BeetleActor Actor = null;
+        if (string.IsNullOrEmpty(args[0]))
+            Actor = GetActorByName(playername);
+        else
+            Actor = GetActorByID(ulong.Parse(args[0])) ?? GetActorByName(args[0]);
         CostumeToggle = !CostumeToggle;
 
         if (CostumeToggle)

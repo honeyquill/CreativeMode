@@ -53,7 +53,7 @@ public static class BeetleUtils
     {
         foreach (var beetle in GetAllBeetles())
         {
-            if (GetPlayerName(beetle) == name)
+            if (GetPlayerName(beetle).ToLower() == name.ToLower())
             {
                 return beetle;
             }
