@@ -229,7 +229,7 @@ namespace CreativeMode.Helpers
 
 
         //string path, float size, Vector3 pos, bool[] Sides, string properties = ""
-        public static void PlaceBlock(BlockData block)
+        public static void PlaceBlock(BlockData block, GameObject parent)
         {
             float size = 5f;
 
@@ -261,7 +261,7 @@ namespace CreativeMode.Helpers
             Vector3 gridP2 = gridCenter - new Vector3(size / 2, size / 2, size / 2);
 
             GameObject cube = RentBlockObject(new Vector3(1,0.5f,1));
-
+            cube.transform.SetParent(parent.transform);
             // Determine mesh mask and materials order. Submesh order is: sides (if present), top (if present), bottom (if present)
             int mask = 0;
             if (block.faces[0]) mask |= 1; // sides

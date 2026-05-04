@@ -124,11 +124,17 @@ namespace CreativeMode.SpecialBlocks
             }
         }
 
-        public static void SpawnDung(BlockData Block, int size)
+        public static void SetSpawningDung(BlockData Block,TeamType Team)
         {
             Vector3 pos = BlockDataToVector3(Block);
-            var rpcParams = new RpcParams(); // initializes new non null rpc params
-            NetworkPrefabSpawner.Instance.SpawnDungBall_ServerRpc(pos, Vector3.zero, size, 0, rpcParams);
+            foreach (var Goal in UnityEngine.Object.FindObjectsOfType<Goal>()) //Get the dung pos through goal
+            {
+                if (Goal.OwnerTeam == Team)
+                {
+                    MelonLogger.Msg("BallSpawn_" + Team);
+                    Goal.transform.parent.Find("BallSpawn_" + Team).position = pos;
+                }
+            }
         }
     }
 }

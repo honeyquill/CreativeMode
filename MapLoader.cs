@@ -16,21 +16,11 @@ using static CreativeMode.ManageFiles;
 using static CreativeMode.SpecialBlocks.SpecialBlocks;
 public class MapLoader
 {
-    // Array of arrays for positions (x, y, z)
-    public static float[][] BlockPositions = new float[0][];
-    // Parallel array for block paths
-    public static string[] BlockPaths = new string[0];
-    public static bool[][] Faces = new bool[0][];
-    public static string[] Properties = new string[0];
-
-    private static Dictionary<int, MapData> S_MapCache = new Dictionary<int, MapData>();
-
-    public bool toggle = false;
-
     bool wasCommenced = false;
     MatchDataManager? matchDataManager;
+    GameObject? Bunny = null;
 
-    public static System.Collections.Generic.Dictionary<string, System.Action<BlockData>> SpecialBlocks = new System.Collections.Generic.Dictionary<string, System.Action<BlockData>>()
+    public static Dictionary<string, System.Action<BlockData>> SpecialBlocks = new Dictionary<string, System.Action<BlockData>>()
     {
         //"sticky_piston.png", "piston.png"
         { "dark_oak_button.png", (BlockData) => ChangeSpawn(BlockData, (TeamType)2)},
@@ -38,8 +28,8 @@ public class MapLoader
         { "snow.png", (BlockData) => SetBunny(BlockData) },
         { "sticky_piston.png", (BlockData) => SpawnGoal(BlockData, TeamType.Red) },
         { "piston.png", (BlockData) => SpawnGoal(BlockData, TeamType.Blue) },
-        { "dark_oak_pressure_plate.png", (BlockData) => SpawnDung(BlockData,4) },
-        { "oak_pressure_plate.png", (BlockData) => SpawnDung(BlockData,5) },
+        { "dark_oak_pressure_plate.png", (BlockData) => SetSpawningDung(BlockData,TeamType.Red) },
+        { "oak_pressure_plate.png", (BlockData) => SetSpawningDung(BlockData,TeamType.Blue) },
 
     };
 
@@ -62,8 +52,18 @@ public class MapLoader
             s_materialCache.Clear();
 
             string pos = "2000,1,2000";
-            MapData data = GetMapData("map");
-            LoadMapFromFile(data, pos);
+            if(File.Exists(Path.Combine(MapFolder(), "map.json")))
+            {
+                MapData data = GetMapData("map");
+                LoadMapFromFile(data, pos);
+            }
+
+            if (File.Exists(Path.Combine(MapFolder(), "map.json")))
+            {
+                pos = "-2000,-2000,-2000";
+                MapData data = GetMapData("bunny");
+                Bunny = LoadMapFromFile(data, pos);
+            }
         }
         wasCommenced = matchDataManager.ActiveMatch.wasCommenced;
     }
@@ -75,16 +75,16 @@ public class MapLoader
         {
             SendChatMessage("There was a error loading the map check console..");
             MelonLogger.Error("Map file not found: " + filePath);
-            return null;
+            return null!;
         }
 
         string json = File.ReadAllText(filePath);
         // Deserialize as object with two arrays
         MapData? data = JsonConvert.DeserializeObject<MapData>(json);
-        return data;
+        return data!;
     }
 
-    private static void LoadMapFromFile(MapData data, string Position)
+    private static GameObject LoadMapFromFile(MapData data, string Position)
     {
         try
         {
@@ -94,6 +94,7 @@ public class MapLoader
             float.TryParse(parts[2], out float z);
             Vector3 Offset = new(x * 5, y * 5, z * 5);
 
+            GameObject MapParent = new GameObject("Map");
 
             if (data == null)
                 throw new System.Exception("Failed to deserialize map data because data was null");
@@ -110,7 +111,7 @@ public class MapLoader
                     action(block);
                     continue;
                 }
-                PlaceBlock(block);
+                PlaceBlock(block, MapParent);
             }
 
             foreach (ChestData chest in data.tile_entities)
@@ -121,15 +122,17 @@ public class MapLoader
                 SendChatMessage($"Spawning chest at X: {chest.x}, Y: {chest.y}, Z: {chest.z}, item 1 inside is {chest.items[0].Name}");
             }
 
-            //if (IsHost())
-            //    respawnall();
+            if (IsHost())
+                respawnall();
             OffsetBunny();
+            
+            return MapParent;
         }
         catch (System.Exception ex)
         {
             MelonLogger.Error("Error during map load: " + ex.Message);
             SendChatMessage("There was an error loading the map, check console.");
-
+            return null!;
         }
     }
 
