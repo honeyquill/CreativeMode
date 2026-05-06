@@ -14,8 +14,6 @@ namespace CreativeMode.Helpers
 {
     internal class Texture
     {
-        public string jsonPath; // path to your JSON file
-        public Material baseMaterial;
         public static readonly Dictionary<string, Material> s_materialCache = new();
         
         public static Material[] GetTextureForBlock(string blockName, bool isSlab, string properties)
@@ -141,6 +139,15 @@ namespace CreativeMode.Helpers
                 result["2"] = model.textures.side  ?? "";
                 result["3"] = model.textures.side  ?? "";
                 result["4"] = model.textures.top ?? model.textures.side ?? model.textures.all ?? "";
+                result["5"] = model.textures.bottom ?? "";
+            }
+            else if (model.parent.Contains("block/slab"))
+            {
+                result["0"] = model.textures.side ?? "";
+                result["1"] = model.textures.side ?? "";
+                result["2"] = model.textures.side ?? "";
+                result["3"] = model.textures.side ?? "";
+                result["4"] = model.textures.top ?? "";
                 result["5"] = model.textures.bottom ?? "";
             }
             else

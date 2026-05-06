@@ -156,11 +156,10 @@ namespace CreativeMode.Helpers
             float size = 5f;
 
             bool slab;
-            string realpath = block.path.Replace("_slab", "");
-            if (realpath != block.path) slab = true; else slab = false;
+            if (block.path.Contains("slab")) slab = true; else slab = false;
             if (block.properties.Contains("double")) slab = false;
 
-            Material[] materials = GetTextureForBlock(realpath,slab,block.properties);
+            Material[] materials = GetTextureForBlock(block.path, slab, block.properties);
 
 
             Vector3 pos = BlockDataToVector3(block);

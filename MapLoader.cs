@@ -26,7 +26,7 @@ public class MapLoader
     private int VideoFps = 10;
 
     private float videoTimer = 0f;
-    GameObject VideoMap;
+    GameObject? VideoMap;
     bool IsInMap = false;
 
     public static Dictionary<string, System.Action<BlockData>> SpecialBlocks = new Dictionary<string, System.Action<BlockData>>()
@@ -187,15 +187,15 @@ public class MapLoader
     public class ChestData
     {
         public float x, y, z;
-        public Item[] items;
+        public Item[]? items;
     }
 
     public class Item
     {
         public int Slot;
-        public string Id;
+        public string? Id;
         public int Count;
-        public ItemTag Tag;  // renamed property type
+        public ItemTag? Tag;  // renamed property type
 
         Regex regex = new Regex("\"text\":\"(.*?)\"");
         public string Name => regex.Match(Tag?.Display?.Name).Groups[1].Value;
@@ -203,11 +203,11 @@ public class MapLoader
 
     public class ItemTag  // renamed from Tag to ItemTag
     {
-        public Display Display { get; set; }
+        public Display? Display { get; set; }
     }
 
     public class Display
     {
-        public string Name { get; set; }
+        public string? Name { get; set; }
     }
 }

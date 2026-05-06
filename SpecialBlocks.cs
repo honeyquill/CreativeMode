@@ -27,10 +27,10 @@ namespace CreativeMode.SpecialBlocks
             float yAngle = 0f; // default
             switch (Dir)
             {
-                case "north": yAngle = 180f; break;
-                case "east": yAngle = 270f; break;
-                case "south": yAngle = 0f; break;
-                case "west": yAngle = 90f; break;
+                case "north": yAngle = 0f; break;
+                case "east": yAngle = 90f; break;
+                case "south": yAngle = 180f; break;
+                case "west": yAngle = 270f; break;
             }
             return Quaternion.Euler(0f, yAngle, 0f);
         }
