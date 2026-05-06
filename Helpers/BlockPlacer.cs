@@ -11,67 +11,16 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using static MapLoader;
 using static CreativeMode.SpecialBlocks.SpecialBlocks;
+using static CreativeMode.Helpers.Texture;
+
 namespace CreativeMode.Helpers
 {
     internal class BlockPlacer
     {
         // Caches and pool to avoid expensive allocations at spawn time
-        public static readonly Dictionary<string, Material> s_materialCache = new();
         public static readonly Stack<GameObject> s_pool = new();
         public static readonly List<GameObject> s_active = new();
         public static readonly Dictionary<int, Mesh> s_meshCache = new();
-
-        public static Material LoadTexture(string path,Vector2 scale,int side)
-        {
-            string Modpath = Path.Combine(MelonEnvironment.ModsDirectory, "CreativeMode/Blocks", path);
-            if (!File.Exists(Modpath))
-            {
-                return null;
-            }
-            byte[] fileData = File.ReadAllBytes(Modpath);
-            Texture2D texture = new Texture2D(2, 2);
-            texture.LoadImage(fileData);
-            texture.filterMode = FilterMode.Point;
-            texture.wrapMode = TextureWrapMode.Repeat;
-            
-
-            Material mat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
-            mat.SetColor("_BaseColor", new Color(0.8f, 0.8f, 0.8f, 1f));
-            mat.enableInstancing = true;
-            mat.mainTexture = texture;
-            mat.mainTextureScale = scale;
-            switch (side)
-            {
-                case 1: // Top
-                    mat.SetColor("_BaseColor", new Color(1.2f, 1.2f, 1.2f, 1f));
-                    break;
-                case 2: // Bottom
-                    mat.SetColor("_BaseColor", new Color(0.6f, 0.6f, 0.6f, 1f));
-                    break;
-                default:
-                    break;
-            } 
-
-            return mat;
-        }
-        
-        // Returns a material, falling back to the fallback when path is missing or invalid.
-        private static Material GetOrCreateMaterial(string path, Vector2 scale, int side)
-        {
-            bool slab = scale != Vector2.one;
-            if (s_materialCache.TryGetValue(path + slab + side, out var mat))
-                return mat;
-
-            var loaded = LoadTexture(path, scale,side);
-            if (loaded == null)
-            {
-                s_materialCache[path + slab + side] = null;
-                return null;
-            }
-
-            s_materialCache[path + slab + side] = loaded;
-            return loaded;
-        }
 
         public static Vector3 Grid(Vector3 original, float gridSize)
         {
@@ -116,18 +65,16 @@ namespace CreativeMode.Helpers
             new Vector3(-0.5f,-0.5f,0.5f)
         };
 
-        // Map for canonical triangle sets
-        private static readonly int[] s_sideTriangles = {
-            0,1,2, 0,2,3,      // Front
-            4,5,6, 4,6,7,      // Back
-            8,9,10, 8,10,11,   // Left
-            12,13,14, 12,14,15 // Right
-        };
+        // Map for canonical triangle sets (6 faces)
+        private static readonly int[] s_frontTriangles = { 0, 1, 2, 0, 2, 3 };
+        private static readonly int[] s_backTriangles = { 4, 5, 6, 4, 6, 7 };
+        private static readonly int[] s_leftTriangles = { 8, 9, 10, 8, 10, 11 };
+        private static readonly int[] s_rightTriangles = { 12, 13, 14, 12, 14, 15 };
         private static readonly int[] s_topTriangles = { 16, 17, 18, 16, 18, 19 };
         private static readonly int[] s_bottomTriangles = { 20, 21, 22, 20, 22, 23 };
 
         // Creates or returns a cached mesh that contains only the enabled submeshes.
-        // mask bits: 1 = sides, 2 = top, 4 = bottom
+        // mask bits: 1 = front, 2 = back, 4 = left, 8 = right, 16 = top, 32 = bottom
         private static Mesh GetSharedMeshForMask(int mask)
         {
             if (s_meshCache.TryGetValue(mask, out var cached))
@@ -139,25 +86,22 @@ namespace CreativeMode.Helpers
 
             // Count enabled submeshes
             int subCount = 0;
-            if ((mask & 1) != 0) subCount++;
-            if ((mask & 2) != 0) subCount++;
-            if ((mask & 4) != 0) subCount++;
+            if ((mask & 1) != 0) subCount++;   // front
+            if ((mask & 2) != 0) subCount++;   // back
+            if ((mask & 4) != 0) subCount++;   // left
+            if ((mask & 8) != 0) subCount++;   // right
+            if ((mask & 16) != 0) subCount++;  // top
+            if ((mask & 32) != 0) subCount++;  // bottom
 
             mesh.subMeshCount = Math.Max(1, subCount); // ensure at least 1 to avoid errors
 
             int subIndex = 0;
-            if ((mask & 1) != 0)
-            {
-                mesh.SetTriangles(s_sideTriangles, subIndex++);
-            }
-            if ((mask & 2) != 0)
-            {
-                mesh.SetTriangles(s_topTriangles, subIndex++);
-            }
-            if ((mask & 4) != 0)
-            {
-                mesh.SetTriangles(s_bottomTriangles, subIndex++);
-            }
+            if ((mask & 1) != 0) mesh.SetTriangles(s_frontTriangles, subIndex++);
+            if ((mask & 2) != 0) mesh.SetTriangles(s_backTriangles, subIndex++);
+            if ((mask & 4) != 0) mesh.SetTriangles(s_leftTriangles, subIndex++);
+            if ((mask & 8) != 0) mesh.SetTriangles(s_rightTriangles, subIndex++);
+            if ((mask & 16) != 0) mesh.SetTriangles(s_topTriangles, subIndex++);
+            if ((mask & 32) != 0) mesh.SetTriangles(s_bottomTriangles, subIndex++);
 
             // UVs (same canonical mapping)
             Vector2[] uvs = new Vector2[24];
@@ -201,32 +145,10 @@ namespace CreativeMode.Helpers
             obj.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off; //disable shadows by default for performance
             var collider = obj.AddComponent<BoxCollider>();
             collider.center = Vector3.zero;
-            collider.size = Vector3.one*1.01f;
+            collider.size = Vector3.one * 1.01f;
             collider.isTrigger = false;
             return obj;
         }
-
-        private static void ReturnBlockObject(GameObject go)
-        {
-            go.SetActive(false);
-            s_pool.Push(go);
-        }
-
-        public static Material GetMaterialByType(string path, Vector2 size, int side)
-        {
-            switch (side)
-            {
-                case 0: // Side
-                    return GetOrCreateMaterial(path, size, side) ?? GetOrCreateMaterial(path.Replace(".png", "s.png"), size, side);
-                case 1: // Top
-                    return GetOrCreateMaterial(path?.Replace(".png", "_top.png"), Vector2.one, side) ?? GetOrCreateMaterial(path.Replace(".png", "s.png").Replace(".png", "_top.png"), Vector2.one, side) ?? GetOrCreateMaterial(path, Vector2.one, side) ?? GetOrCreateMaterial(path.Replace(".png", "s.png"), Vector2.one, side);
-                case 2: // Bottom
-                    return GetOrCreateMaterial(path?.Replace(".png", "_bottom.png"), Vector2.one, side) ?? GetOrCreateMaterial(path.Replace(".png", "s.png").Replace(".png", "_bottom.png"), Vector2.one, side) ?? GetOrCreateMaterial(path, Vector2.one, side) ?? GetOrCreateMaterial(path.Replace(".png", "s.png"), Vector2.one, side) ?? GetMaterialByType(path, Vector2.one, 2);
-                default:
-                    return null;
-            }
-        }
-
 
         //string path, float size, Vector3 pos, bool[] Sides, string properties = ""
         public static void PlaceBlock(BlockData block, GameObject parent)
@@ -236,21 +158,10 @@ namespace CreativeMode.Helpers
             bool slab;
             string realpath = block.path.Replace("_slab", "");
             if (realpath != block.path) slab = true; else slab = false;
-            if(block.properties.Contains("double")) slab = false;
+            if (block.properties.Contains("double")) slab = false;
 
-            Material sideMat;
-            if (slab)
-            {
-                sideMat = GetMaterialByType(realpath, new Vector2(1, 0.5f),0);
-            }
-            else
-            {
-                sideMat = GetMaterialByType(realpath, Vector2.one, 0);
-            }
+            Material[] materials = GetTextureForBlock(realpath,slab,block.properties);
 
-
-            Material topMat = GetMaterialByType(realpath, new Vector2(1, 1f), 1);
-            Material bottomMat = GetMaterialByType(realpath, new Vector2(1, 1f), 2);
 
             Vector3 pos = BlockDataToVector3(block);
 
@@ -260,26 +171,15 @@ namespace CreativeMode.Helpers
             Vector3 gridP1 = gridCenter + new Vector3(size / 2, size / 2, size / 2);
             Vector3 gridP2 = gridCenter - new Vector3(size / 2, size / 2, size / 2);
 
-            GameObject cube = RentBlockObject(new Vector3(1,0.5f,1));
+            GameObject cube = RentBlockObject(new Vector3(1, 0.5f, 1));
             cube.transform.SetParent(parent.transform);
-            // Determine mesh mask and materials order. Submesh order is: sides (if present), top (if present), bottom (if present)
-            int mask = 0;
-            if (block.faces[0]) mask |= 1; // sides
-            if (block.faces[1]) mask |= 2; // top
-            if (block.faces[2]) mask |= 4; // bottom
 
-            // Ensure at least one face is rendered; if none are requested, render sides as fallback for visibility/perf predictability
-            if (mask == 0) mask = 1;
+            
 
             var mf = cube.GetComponent<MeshFilter>();
-            mf.sharedMesh = GetSharedMeshForMask(mask);
+            mf.sharedMesh = GetSharedMeshForMask(63);
 
             var mr = cube.GetComponent<MeshRenderer>();
-
-            var materials = new List<Material>(3);
-            if ((mask & 1) != 0) materials.Add(sideMat);
-            if ((mask & 2) != 0) materials.Add(topMat);
-            if ((mask & 4) != 0) materials.Add(bottomMat);
 
             mr.sharedMaterials = materials.ToArray();
 
@@ -302,7 +202,6 @@ namespace CreativeMode.Helpers
                 Mathf.Abs(gridP2.z - gridP1.z)
             );
 
-
             var box = cube.GetComponent<BoxCollider>();
             if (box == null) box = cube.AddComponent<BoxCollider>();
             box.center = Vector3.zero;
@@ -311,50 +210,6 @@ namespace CreativeMode.Helpers
 
             // Track for removal
             s_active.Add(cube);
-        }
-
-        // Finds nearest active block at approximate location and returns it to the pool.
-        public static void RemoveBlock(Vector3 pos)
-        {
-            const float eps = 0.01f;
-            GameObject found = null;
-            for (int i = 0; i < s_active.Count; i++)
-            {
-                var go = s_active[i];
-                if (Vector3.Distance(go.transform.position, pos) <= eps)
-                {
-                    found = go;
-                    s_active.RemoveAt(i);
-                    break;
-                }
-            }
-
-            if (found != null)
-            {
-                ReturnBlockObject(found);
-            }
-            else
-            {
-                // If nothing matched exactly, try to remove the closest within a larger radius
-                float bestDist = float.MaxValue;
-                int bestIdx = -1;
-                for (int i = 0; i < s_active.Count; i++)
-                {
-                    var d = Vector3.Distance(s_active[i].transform.position, pos);
-                    if (d < bestDist)
-                    {
-                        bestDist = d;
-                        bestIdx = i;
-                    }
-                }
-
-                if (bestIdx >= 0 && bestDist <= 1.0f)
-                {
-                    var go = s_active[bestIdx];
-                    s_active.RemoveAt(bestIdx);
-                    ReturnBlockObject(go);
-                }
-            }
         }
     }
 }

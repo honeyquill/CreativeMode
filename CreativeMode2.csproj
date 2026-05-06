@@ -88,6 +88,7 @@
     <Compile Include="Commands\Warp.cs" />
     <Compile Include="Helpers\BeetleUtils.cs" />
     <Compile Include="Helpers\BlockPlacer.cs" />
+    <Compile Include="Helpers\Texture.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="MapLoader.cs" />
     <Compile Include="ManageFiles.cs" />

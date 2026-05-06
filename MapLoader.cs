@@ -14,22 +14,31 @@ using static CreativeMode.Helpers.BeetleUtils;
 using static CreativeMode.Helpers.BlockPlacer;
 using static CreativeMode.ManageFiles;
 using static CreativeMode.SpecialBlocks.SpecialBlocks;
+using static CreativeMode.Helpers.Texture;
 public class MapLoader
 {
     bool wasCommenced = false;
     MatchDataManager? matchDataManager;
     GameObject? Bunny = null;
 
+    private int VideoIndex = 0;
+    private int VideoLength = -1;
+    private int VideoFps = 10;
+
+    private float videoTimer = 0f;
+    GameObject VideoMap;
+    bool IsInMap = false;
+
     public static Dictionary<string, System.Action<BlockData>> SpecialBlocks = new Dictionary<string, System.Action<BlockData>>()
     {
         //"sticky_piston.png", "piston.png"
-        { "dark_oak_button.png", (BlockData) => ChangeSpawn(BlockData, (TeamType)2)},
-        { "oak_button.png", (BlockData) => ChangeSpawn(BlockData, 0)},
-        { "snow.png", (BlockData) => SetBunny(BlockData) },
-        { "sticky_piston.png", (BlockData) => SpawnGoal(BlockData, TeamType.Red) },
-        { "piston.png", (BlockData) => SpawnGoal(BlockData, TeamType.Blue) },
-        { "dark_oak_pressure_plate.png", (BlockData) => SetSpawningDung(BlockData,TeamType.Red) },
-        { "oak_pressure_plate.png", (BlockData) => SetSpawningDung(BlockData,TeamType.Blue) },
+        { "dark_oak_button", (BlockData) => ChangeSpawn(BlockData, (TeamType)2)},
+        { "oak_button", (BlockData) => ChangeSpawn(BlockData, 0)},
+        { "snow", (BlockData) => SetBunny(BlockData) },
+        { "sticky_piston", (BlockData) => SpawnGoal(BlockData, TeamType.Red) },
+        { "piston", (BlockData) => SpawnGoal(BlockData, TeamType.Blue) },
+        { "dark_oak_pressure_plate", (BlockData) => SetSpawningDung(BlockData,TeamType.Red) },
+        { "oak_pressure_plate", (BlockData) => SetSpawningDung(BlockData,TeamType.Blue) },
 
     };
 
@@ -48,6 +57,7 @@ public class MapLoader
 
         if (wasCommenced != matchDataManager.ActiveMatch.wasCommenced && !wasCommenced) //Match just loaded
         {
+            IsInMap = true;
             s_meshCache.Clear();
             s_materialCache.Clear();
 
@@ -58,7 +68,7 @@ public class MapLoader
                 LoadMapFromFile(data, pos);
             }
 
-            if (File.Exists(Path.Combine(MapFolder(), "map.json")))
+            if (File.Exists(Path.Combine(MapFolder(), "bunny.json")))
             {
                 pos = "-2000,-2000,-2000";
                 MapData data = GetMapData("bunny");
@@ -66,6 +76,9 @@ public class MapLoader
             }
         }
         wasCommenced = matchDataManager.ActiveMatch.wasCommenced;
+
+        if (IsInMap)
+            PlayVideoFrame();
     }
 
     public static MapData GetMapData(string Mapname)
@@ -134,6 +147,28 @@ public class MapLoader
             SendChatMessage("There was an error loading the map, check console.");
             return null!;
         }
+    }
+
+    private void PlayVideoFrame()
+    {
+        videoTimer += Time.deltaTime;
+
+        float frameDuration = 1f / VideoFps;
+
+        if (videoTimer < frameDuration) return;
+
+        videoTimer -= frameDuration;
+        VideoIndex++;
+
+        if (VideoIndex > VideoLength) return;
+
+        Object.Destroy(VideoMap);
+        s_meshCache.Clear();
+        s_materialCache.Clear();
+
+        MapData data = GetMapData(VideoIndex.ToString());
+        string pos = "2000,1,2000";
+        VideoMap = LoadMapFromFile(data, pos);
     }
 
     // Helper class for JSON serialization

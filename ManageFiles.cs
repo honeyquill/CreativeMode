@@ -8,7 +8,7 @@ namespace CreativeMode
 {
     internal class ManageFiles
     {
-        static string[] folders = { @"CreativeMode\Blocks", @"CreativeMode\Maps", @"CreativeMode\Warps" };
+        static string[] folders = { @"CreativeMode\Blocks", @"CreativeMode\Maps", @"CreativeMode\Warps", @"CreativeMode\Models" };
         public static void CreateFoldersIfNeeded()
         {
             string modfolder = ModFolder();
@@ -42,6 +42,10 @@ namespace CreativeMode
         public static string WarpsFolder()
         {
             return Path.Combine(ModFolder(), folders[2]);
+        }
+        public static string ModelFolder()
+        {
+            return Path.Combine(ModFolder(), folders[3]);
         }
     }
 }
