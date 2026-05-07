@@ -181,7 +181,7 @@ public class MapLoader
     {
         public string path = "";
         public float[] position = new float[3];
-        public bool[] faces = new bool[3];
+        public int mask = 0;
         public string properties = "";
     }
     public class ChestData

@@ -15,56 +15,50 @@ namespace CreativeMode.Helpers
     internal class Texture
     {
         public static readonly Dictionary<string, Material> s_materialCache = new();
-        
+
         public static Material[] GetTextureForBlock(string blockName, bool isSlab, string properties)
         {
             var Mat = new Material[6];
             var ModelPath = ModelFolder();
             string jsonFilePath = Path.Combine(ModelPath, blockName + ".json");
-            
+
             if (!File.Exists(jsonFilePath))
             {
                 MelonLogger.Warning($"Block model JSON not found: {jsonFilePath}");
                 return new Material[6]; // Return empty materials array
             }
-            
+
             try
             {
                 string json = File.ReadAllText(jsonFilePath);
                 BlockModel model = JsonConvert.DeserializeObject<BlockModel>(json);
-                
+
                 if (model == null || model.textures == null)
                 {
                     MelonLogger.Warning($"Failed to deserialize block model: {jsonFilePath}");
                     return new Material[6];
                 }
 
-                Dictionary<string, string> faces = GetFaceTextures(model, properties);
+                Dictionary<Face, string> faces = GetFaceTextures(model, properties);
 
-                for (int i = 0; i < 6; i++)
+                foreach (KeyValuePair<Face, string> entry in faces)
                 {
-                    // Ensure face texture exists in dictionary
-                    if (!faces.ContainsKey(i.ToString()))
-                    {
-                        MelonLogger.Warning($"Face {i} texture not found for block {blockName}");
-                        Mat[i] = null;
-                        continue;
-                    }
 
-                    string texturePath = faces[i.ToString()];
+
+                    string texturePath = entry.Value;
                     if (string.IsNullOrEmpty(texturePath))
                     {
-                        MelonLogger.Warning($"Texture path is null or empty for face {i} of block {blockName}");
-                        Mat[i] = null;
+                        MelonLogger.Warning($"Texture path is null or empty for face {entry.Key} of block {blockName}");
+                        Mat[(int)entry.Key] = null;
                         continue;
                     }
 
-                    if (isSlab && (i == 2 || i == 3)) // top and bottom faces of a slab should use the side texture
+                    if (isSlab && !(entry.Key == Face.Top || entry.Key == Face.Bottom))
                     {
-                        Mat[i] = GetOrCreateMaterial(texturePath, new Vector2(1, 0.5f), i);
+                        Mat[(int)entry.Key] = GetOrCreateMaterial(texturePath, new Vector2(1f,0.5f),entry.Key);
                     }
                     else
-                        Mat[i] = GetOrCreateMaterial(texturePath, Vector2.one, i);
+                        Mat[(int)entry.Key] = GetOrCreateMaterial(texturePath, Vector2.one, entry.Key);
                 }
             }
             catch (Exception ex)
@@ -75,9 +69,9 @@ namespace CreativeMode.Helpers
             return Mat;
         }
 
-        private static Dictionary<string, string> GetFaceTextures(BlockModel model,string properties)
+        private static Dictionary<Face, string> GetFaceTextures(BlockModel model, string properties)
         {
-            Dictionary<string, string> result = new Dictionary<string, string>();
+            Dictionary<Face, string> result = new Dictionary<Face, string>();
 
             if (model.parent == null)
             {
@@ -87,85 +81,83 @@ namespace CreativeMode.Helpers
 
             if (model.parent.Contains("cube_all"))
             {
-                for (int i = 0; i < 6; i++)
-                    result[i.ToString()] = model.textures.all ?? "";
+                foreach (Face i in Enum.GetValues(typeof(Face)))
+                    result[i] = model.textures.all ?? "";
             }
             else if (model.parent.Contains("cube_column"))
             {
                 if (properties.Contains("'axis': y"))
                 {
-                    result["0"] = model.textures.side ?? "";
-                    result["1"] = model.textures.side ?? "";
-                    result["2"] = model.textures.side ?? "";
-                    result["3"] = model.textures.side ?? "";
-                    result["4"] = model.textures.end ?? "";
-                    result["5"] = model.textures.end ?? "";
+                    result[Face.Front] = model.textures.side ?? "";
+                    result[Face.Back] = model.textures.side ?? "";
+                    result[Face.Left] = model.textures.side ?? "";
+                    result[Face.Right] = model.textures.side ?? "";
+                    result[Face.Top] = model.textures.end ?? "";
+                    result[Face.Bottom] = model.textures.end ?? "";
                 }
                 else if (properties.Contains("'axis': z"))
                 {
-                    result["0"] = model.textures.end ?? "";
-                    result["1"] = model.textures.end ?? "";
-                    result["2"] = model.textures.side ?? "";
-                    result["3"] = model.textures.side ?? "";
-                    result["4"] = model.textures.side ?? "";
-                    result["5"] = model.textures.side ?? "";
+                    result[Face.Front] = model.textures.end ?? "";
+                    result[Face.Back] = model.textures.end ?? "";
+                    result[Face.Left] = model.textures.side ?? "";
+                    result[Face.Right] = model.textures.side ?? "";
+                    result[Face.Top] = model.textures.side ?? "";
+                    result[Face.Bottom] = model.textures.side ?? "";
                 }
                 else if (properties.Contains("'axis': x"))
                 {
-                    result["0"] = model.textures.side ?? "";
-                    result["1"] = model.textures.side ?? "";
-                    result["2"] = model.textures.end ?? "";
-                    result["3"] = model.textures.end ?? "";
-                    result["4"] = model.textures.side ?? "";
-                    result["5"] = model.textures.side ?? "";
+                    result[Face.Front] = model.textures.side ?? "";
+                    result[Face.Back] = model.textures.side ?? "";
+                    result[Face.Left] = model.textures.end ?? "";
+                    result[Face.Right] = model.textures.end ?? "";
+                    result[Face.Top] = model.textures.side ?? "";
+                    result[Face.Bottom] = model.textures.side ?? "";
                 }
 
             }
             else if (model.parent.Contains("orientable"))
             {
-                result["4"] = model.textures.front ?? ""; // front
-                result["5"] = model.textures.side ?? "";  // back
-
-                result["0"] = model.textures.side ?? "";
-                result["1"] = model.textures.side ?? "";
-
-                result["2"] = model.textures.top ?? "";
-                result["3"] = model.textures.top ?? "";
+                result[Face.Front] = model.textures.front ?? "";
+                result[Face.Back] = model.textures.side ?? "";
+                result[Face.Left] = model.textures.side ?? "";
+                result[Face.Right] = model.textures.side ?? "";
+                result[Face.Top] = model.textures.top ?? "";
+                result[Face.Bottom] = model.textures.side ?? "";
             }
             else if (model.parent.Contains("block/block"))
             {
-                result["0"] = model.textures.side ?? "";
-                result["1"] = model.textures.side ?? "";
-                result["2"] = model.textures.side  ?? "";
-                result["3"] = model.textures.side  ?? "";
-                result["4"] = model.textures.top ?? model.textures.side ?? model.textures.all ?? "";
-                result["5"] = model.textures.bottom ?? "";
+                result[Face.Front] = model.textures.side ?? "";
+                result[Face.Back] = model.textures.side ?? "";
+                result[Face.Left] = model.textures.side ?? "";
+                result[Face.Right] = model.textures.side ?? "";
+                result[Face.Top] = model.textures.top ?? model.textures.side ?? model.textures.all ?? "";
+                result[Face.Bottom] = model.textures.bottom ?? "";
             }
             else if (model.parent.Contains("block/slab"))
             {
-                result["0"] = model.textures.side ?? "";
-                result["1"] = model.textures.side ?? "";
-                result["2"] = model.textures.side ?? "";
-                result["3"] = model.textures.side ?? "";
-                result["4"] = model.textures.top ?? "";
-                result["5"] = model.textures.bottom ?? "";
+                result[Face.Front] = model.textures.side ?? "";
+                result[Face.Back] = model.textures.side ?? "";
+                result[Face.Left] = model.textures.side ?? "";
+                result[Face.Right] = model.textures.side ?? "";
+                result[Face.Top] = model.textures.top ?? "";
+                result[Face.Bottom] = model.textures.bottom ?? "";
             }
             else
             {
                 MelonLogger.Warning($"Unknown block parent type: {model.parent}");
                 // Fallback: try to use all available textures
-                result["0"] = model.textures.side ?? model.textures.all ?? "";
-                result["1"] = model.textures.side ?? model.textures.all ?? "";
-                result["2"] = model.textures.top ?? model.textures.all ?? "";
-                result["3"] = model.textures.top ?? model.textures.all ?? "";
-                result["4"] = model.textures.front ?? model.textures.side ?? model.textures.all ?? "";
-                result["5"] = model.textures.side ?? model.textures.all ?? "";
+                result[Face.Front] = model.textures.side ?? model.textures.all ?? "";
+                result[Face.Back] = model.textures.side ?? model.textures.all ?? "";
+                result[Face.Left] = model.textures.top ?? model.textures.all ?? "";
+                result[Face.Right] = model.textures.top ?? model.textures.all ?? "";
+                result[Face.Top] = model.textures.front ?? model.textures.side ?? model.textures.all ?? "";
+                result[Face.Bottom] = model.textures.side ?? model.textures.all ?? "";
             }
 
             return result;
         }
 
-        private static Material GetOrCreateMaterial(string path, Vector2 scale, int side)
+        private static Material GetOrCreateMaterial(string path, Vector2 scale, Face face)
         {
             Regex regex = new Regex(@"block/(.*)"); // Extract filename without extension block/grass_block_side
 
@@ -175,15 +167,15 @@ namespace CreativeMode.Helpers
                 return null;
 
             bool slab = scale != Vector2.one;
-            if (s_materialCache.TryGetValue(path + slab + side, out var mat))
+            if (s_materialCache.TryGetValue(path + slab + face, out var mat))
                 return mat;
 
-            var loaded = LoadTexture(path, scale, side);
-            s_materialCache[path + slab + side] = loaded;
+            var loaded = LoadTexture(path, scale,face);
+            s_materialCache[path + slab + face] = loaded;
             return loaded;
         }
 
-        public static Material LoadTexture(string path, Vector2 scale, int side)
+        public static Material LoadTexture(string path, Vector2 scale,Face face)
         {
             if (string.IsNullOrEmpty(path))
             {
@@ -191,7 +183,7 @@ namespace CreativeMode.Helpers
                 return null;
             }
 
-            string Modpath = Path.Combine(BlockFolder(), path+".png");
+            string Modpath = Path.Combine(BlockFolder(), path + ".png");
             if (!File.Exists(Modpath))
             {
                 MelonLogger.Warning($"Texture file not found: {Modpath}");
@@ -207,22 +199,35 @@ namespace CreativeMode.Helpers
                 texture.wrapMode = TextureWrapMode.Repeat;
 
                 Material mat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
-                mat.SetColor("_BaseColor", new Color(0.8f, 0.8f, 0.8f, 1f));
+
+                float brightness = 1.0f;
+                switch (face)
+                {
+                    case Face.Front:
+                        brightness = 0.9f;
+                        break;
+                    case Face.Back:
+                        brightness = 0.7f;
+                        break;
+                    case Face.Left:
+                        brightness = 0.8f;
+                        break;
+                    case Face.Right:
+                        brightness = 0.85f;
+                        break;
+                    case Face.Top:
+                        brightness = 1.0f;
+                        break;
+                    case Face.Bottom:
+                        brightness = 0.7f;
+                        break;
+                }
+
+
+                mat.SetColor("_BaseColor", new Color(brightness, brightness, brightness, 1f));
                 mat.enableInstancing = true;
                 mat.mainTexture = texture;
                 mat.mainTextureScale = scale;
-                
-                switch (side)
-                {
-                    case 4: // Top
-                        mat.SetColor("_BaseColor", new Color(1.2f, 1.2f, 1.2f, 1f));
-                        break;
-                    case 5: // Bottom
-                        mat.SetColor("_BaseColor", new Color(0.6f, 0.6f, 0.6f, 1f));
-                        break;
-                    default:
-                        break;
-                }
 
                 return mat;
             }
@@ -250,5 +255,14 @@ namespace CreativeMode.Helpers
         public string end;
         public string front;
         public string bottom;
+    }
+    public enum Face
+    {
+        Front = 0,
+        Back = 1,
+        Left = 2,
+        Right = 3,
+        Top = 4,
+        Bottom = 5
     }
 }

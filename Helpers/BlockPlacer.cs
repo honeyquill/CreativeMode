@@ -120,8 +120,6 @@ namespace CreativeMode.Helpers
             s_meshCache[mask] = mesh;
             return mesh;
         }
-
-        // Pooling helper
         private static GameObject RentBlockObject(Vector3 size)
         {
             if (s_pool.Count > 0)
@@ -129,28 +127,73 @@ namespace CreativeMode.Helpers
                 var go = s_pool.Pop();
                 go.SetActive(true);
 
-                // Ensure collider exists and reset it
+                // Get all components we need in ONE pass (not multiple GetComponent calls)
+                var mf = go.GetComponent<MeshFilter>();
+                var mr = go.GetComponent<MeshRenderer>();
                 var bc = go.GetComponent<BoxCollider>();
-                if (bc == null) bc = go.AddComponent<BoxCollider>();
-                bc.center = Vector3.zero;
-                bc.size = size;
-                bc.isTrigger = false;
+
+                // CRITICAL FIX: Collider already exists, just reset its size
+                // Don't call AddComponent again - that creates a NEW collider and leaks the old one
+                if (bc != null)
+                {
+                    bc.center = Vector3.zero;
+                    bc.size = size;
+                    bc.isTrigger = false;
+                }
 
                 return go;
             }
 
+            // First time creation - set up the GameObject with all components it will ever need
             var obj = new GameObject("Block");
-            obj.AddComponent<MeshFilter>();
-            obj.AddComponent<MeshRenderer>();
-            obj.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off; //disable shadows by default for performance
-            var collider = obj.AddComponent<BoxCollider>();
-            collider.center = Vector3.zero;
-            collider.size = Vector3.one * 1.01f;
-            collider.isTrigger = false;
+
+            // Add components once - they will be reused forever
+            var meshFilter = obj.AddComponent<MeshFilter>();
+            var meshRenderer = obj.AddComponent<MeshRenderer>();
+            var boxCollider = obj.AddComponent<BoxCollider>();
+
+            // Configure renderer for performance
+            meshRenderer.shadowCastingMode = ShadowCastingMode.Off; // disable shadows by default
+            meshRenderer.receiveShadows = false; // blocks don't receive shadows
+
+            // Configure collider
+            boxCollider.center = Vector3.zero;
+            boxCollider.size = size;
+            boxCollider.isTrigger = false;
+
             return obj;
         }
+        public static void ReturnBlockToPool(GameObject block)
+        {
+            if (block == null)
+                return;
 
-        //string path, float size, Vector3 pos, bool[] Sides, string properties = ""
+            // Disable the object
+            block.SetActive(false);
+
+            // Clear references to prevent memory leaks
+            var mf = block.GetComponent<MeshFilter>();
+            if (mf != null)
+                mf.sharedMesh = null;
+
+            var mr = block.GetComponent<MeshRenderer>();
+            if (mr != null)
+                mr.sharedMaterials = new Material[0];
+
+            // Return to pool for reuse
+            s_pool.Push(block);
+        }
+
+ 
+        public static void ClearAllBlocks()
+        {
+            for (int i = s_active.Count - 1; i >= 0; i--)
+            {
+                ReturnBlockToPool(s_active[i]);
+            }
+            s_active.Clear();
+        }
+
         public static void PlaceBlock(BlockData block, GameObject parent)
         {
             float size = 5f;
@@ -161,7 +204,6 @@ namespace CreativeMode.Helpers
 
             Material[] materials = GetTextureForBlock(block.path, slab, block.properties);
 
-
             Vector3 pos = BlockDataToVector3(block);
 
             // Snap the position to the nearest grid point
@@ -170,16 +212,16 @@ namespace CreativeMode.Helpers
             Vector3 gridP1 = gridCenter + new Vector3(size / 2, size / 2, size / 2);
             Vector3 gridP2 = gridCenter - new Vector3(size / 2, size / 2, size / 2);
 
+            // Rent from pool instead of creating new
             GameObject cube = RentBlockObject(new Vector3(1, 0.5f, 1));
             cube.transform.SetParent(parent.transform);
 
-            
-
+            // Set mesh (cached)
             var mf = cube.GetComponent<MeshFilter>();
             mf.sharedMesh = GetSharedMeshForMask(63);
 
+            // Set materials
             var mr = cube.GetComponent<MeshRenderer>();
-
             mr.sharedMaterials = materials.ToArray();
 
             // Reduce renderer overhead
@@ -188,24 +230,33 @@ namespace CreativeMode.Helpers
 
             // Set transform
             cube.transform.position = (gridP1 + gridP2) / 2f;
-            if (slab && block.properties.Contains("bottom")) cube.transform.position += new Vector3(0, -size * 0.5f, 0); // adjust for slab height
+            if (slab)
+                if (block.properties.Contains("bottom"))
+                    cube.transform.position += new Vector3(0, -size * 0.25f, 0);
+                else
+                    cube.transform.position += new Vector3(0, size * 0.25f, 0);
             cube.transform.rotation = Quaternion.identity;
+
             if (slab)
             {
                 gridP1.y *= 0.5f;
                 gridP2.y *= 0.5f;
             }
+
             cube.transform.localScale = new Vector3(
                 Mathf.Abs(gridP2.x - gridP1.x),
                 Mathf.Abs(gridP2.y - gridP1.y),
                 Mathf.Abs(gridP2.z - gridP1.z)
             );
 
+            // Collider is already configured by RentBlockObject
             var box = cube.GetComponent<BoxCollider>();
-            if (box == null) box = cube.AddComponent<BoxCollider>();
-            box.center = Vector3.zero;
-            box.size = Vector3.one;
-            box.isTrigger = false;
+            if (box != null)
+            {
+                box.center = Vector3.zero;
+                box.size = Vector3.one;
+                box.isTrigger = false;
+            }
 
             // Track for removal
             s_active.Add(cube);
